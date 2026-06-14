@@ -4,6 +4,7 @@
  */
 import type { Payload } from 'payload'
 
+import { MODULE_KEYS, MODULE_META, type ModuleKey } from '@/lib/billing/modules'
 import { richTextFromParagraphs } from '@/lib/lexical'
 
 export async function runSeed(payload: Payload): Promise<{ ok: true }> {
@@ -25,44 +26,141 @@ export async function runSeed(payload: Payload): Promise<{ ok: true }> {
     }
   }
 
-  // ── service plans ──────────────────────────────────────────────
+  // ── modules + packs (пакеты квот по модулям, как у конкурента) ──
   {
-    const existing = await payload.find({ collection: 'service-plans', limit: 1 })
-    if (existing.totalDocs === 0) {
-      const plans = [
-        {
-          name: 'Тест', tier: 'test' as const, tagline: 'Познакомиться с платформой',
-          price: 0, currency: 'UAH' as const, billingPeriod: 'month' as const,
-          requestLimit: 5, historyDepthMonths: 1, exportEnabled: false, apiAccess: false, seats: 1,
-          order: 1, isActive: true,
-          features: [{ label: 'Публичная карта цен' }, { label: '5 экспресс-оценок/мес' }, { label: 'Telegram-бот' }],
-        },
-        {
-          name: 'Базовый', tier: 'basic' as const, tagline: 'Для риелторов и аналитиков',
-          price: 490, currency: 'UAH' as const, billingPeriod: 'month' as const,
-          requestLimit: 100, historyDepthMonths: 12, exportEnabled: false, apiAccess: false, seats: 1,
-          order: 2, isActive: true,
-          features: [{ label: '100 оценок/мес' }, { label: 'Ретроспектива 12 мес' }, { label: 'Карта без ограничений' }],
-        },
-        {
-          name: 'Профи', tier: 'pro' as const, tagline: 'Для оценщиков и экспертов',
-          price: 1490, currency: 'UAH' as const, billingPeriod: 'month' as const,
-          requestLimit: 1000, historyDepthMonths: 60, exportEnabled: true, apiAccess: false, seats: 1,
-          highlighted: true, order: 3, isActive: true,
-          features: [{ label: '1000 оценок/мес' }, { label: 'Ретроспектива 5 лет' }, { label: 'Экспорт в Word/PDF' }, { label: 'Детальные отчёты' }],
-        },
-        {
-          name: 'Корпоративный', tier: 'corporate' as const, tagline: 'Для банков и застройщиков',
-          price: 9900, currency: 'UAH' as const, billingPeriod: 'month' as const,
-          requestLimit: 0, historyDepthMonths: 120, exportEnabled: true, apiAccess: true, seats: 10,
-          order: 4, isActive: true, ctaLabel: 'Запросить счёт',
-          features: [{ label: 'Безлимит оценок' }, { label: 'Доступ к API' }, { label: '10 мест (seats)' }, { label: 'Безнал: счёт/акт' }, { label: 'Приоритетная поддержка' }],
-        },
-      ]
-      for (const data of plans) await payload.create({ collection: 'service-plans', data })
-      log(`создано тарифов: ${plans.length}`)
+    const moduleId = {} as Record<ModuleKey, number>
+    const existingModules = await payload.find({ collection: 'modules', limit: 100 })
+    if (existingModules.totalDocs === 0) {
+      for (const key of MODULE_KEYS) {
+        const m = MODULE_META[key]
+        const created = await payload.create({
+          collection: 'modules',
+          data: {
+            name: m.title,
+            key: m.key,
+            slug: m.key,
+            summary: m.summary,
+            icon: m.icon,
+            accessType: m.accessType,
+            order: m.order,
+            isActive: true,
+          },
+        })
+        moduleId[key] = created.id
+      }
+      log(`создано модулей: ${MODULE_KEYS.length}`)
     } else {
-      log('тарифы уже есть — пропускаю')
+      for (const m of existingModules.docs) moduleId[m.key as ModuleKey] = m.id
+    }
+
+    const existingPacks = await payload.find({ collection: 'service-plans', limit: 1 })
+    if (existingPacks.totalDocs === 0) {
+      const level = ['min', 'mid', 'max'] as const
+      let order = 0
+      let count = 0
+
+      // Калькулятор оцінювача + АРМ Аналітика (бандл): 10/1200, 20/2000, 50/4000
+      const bundle: Array<[number, number]> = [[10, 1200], [20, 2000], [50, 4000]]
+      for (let i = 0; i < bundle.length; i++) {
+        const [q, g] = bundle[i]
+        await payload.create({
+          collection: 'service-plans',
+          data: {
+            name: `Калькулятор + Аналітика — ${q}`,
+            module: moduleId['appraiser-calculator'],
+            grantsModules: [moduleId['arm-analytics']],
+            accessType: 'quota',
+            packLevel: level[i],
+            quota: q,
+            price: g,
+            priceMinor: g * 100,
+            currency: 'UAH',
+            billingPeriod: 'one-time',
+            highlighted: i === 1,
+            tagline: `${q} запросов`,
+            order: ++order,
+            isActive: true,
+            features: [{ label: `${q} расчётов` }, { label: 'Калькулятор + АРМ Аналітика' }, { label: 'Экспорт в Excel' }],
+          },
+        })
+        count++
+      }
+
+      // Експрес оцінка: 20/2000, 50/4000, 100/7000
+      const express: Array<[number, number]> = [[20, 2000], [50, 4000], [100, 7000]]
+      for (let i = 0; i < express.length; i++) {
+        const [q, g] = express[i]
+        await payload.create({
+          collection: 'service-plans',
+          data: {
+            name: `Експрес оцінка — ${q}`,
+            module: moduleId['express-valuation'],
+            accessType: 'quota',
+            packLevel: level[i],
+            quota: q,
+            price: g,
+            priceMinor: g * 100,
+            currency: 'UAH',
+            billingPeriod: 'one-time',
+            highlighted: i === 1,
+            tagline: `${q} оценок`,
+            order: ++order,
+            isActive: true,
+            features: [{ label: `${q} экспресс-оценок` }, { label: 'Ретроспектива с 2018' }, { label: '1 аккаунт' }],
+          },
+        })
+        count++
+      }
+
+      // Генератор звітів: 5/1100, 10/2000, 20/3600
+      const reports: Array<[number, number]> = [[5, 1100], [10, 2000], [20, 3600]]
+      for (let i = 0; i < reports.length; i++) {
+        const [q, g] = reports[i]
+        await payload.create({
+          collection: 'service-plans',
+          data: {
+            name: `Генератор звітів — ${q}`,
+            module: moduleId['report-generator'],
+            accessType: 'quota',
+            packLevel: level[i],
+            quota: q,
+            price: g,
+            priceMinor: g * 100,
+            currency: 'UAH',
+            billingPeriod: 'one-time',
+            highlighted: i === 1,
+            tagline: `${q} отчётов`,
+            order: ++order,
+            isActive: true,
+            features: [{ label: `${q} PDF-отчётов` }, { label: 'Средние цены по сегментам' }],
+          },
+        })
+        count++
+      }
+
+      // Інтерактивний звіт: period 180 дней / 12000
+      await payload.create({
+        collection: 'service-plans',
+        data: {
+          name: 'Інтерактивний звіт — 6 міс',
+          module: moduleId['interactive-report'],
+          accessType: 'period',
+          periodDays: 180,
+          price: 12000,
+          priceMinor: 12000 * 100,
+          currency: 'UAH',
+          billingPeriod: 'one-time',
+          tagline: '6 месяцев, 1 аккаунт',
+          order: ++order,
+          isActive: true,
+          features: [{ label: 'Сквозная аналитика рынка' }, { label: 'Коэффициенты торга, капитализации' }, { label: '6 месяцев доступа' }],
+        },
+      })
+      count++
+
+      log(`создано пакетов: ${count}`)
+    } else {
+      log('пакеты уже есть — пропускаю')
     }
   }
 

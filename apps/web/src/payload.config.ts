@@ -10,10 +10,15 @@ import { buildConfig } from 'payload'
 import { fileURLToPath } from 'url'
 import sharp from 'sharp'
 
+import { Entitlements } from './collections/Entitlements'
 import { Media } from './collections/Media'
+import { Modules } from './collections/Modules'
 import { News } from './collections/News'
+import { Orders } from './collections/Orders'
+import { Organizations } from './collections/Organizations'
 import { Pages } from './collections/Pages'
 import { Partners } from './collections/Partners'
+import { PaymentEvents } from './collections/PaymentEvents'
 import { ServicePlans } from './collections/ServicePlans'
 import { TeamMembers } from './collections/TeamMembers'
 import { Tools } from './collections/Tools'
@@ -33,7 +38,24 @@ export default buildConfig({
       titleSuffix: '— Realtify CMS',
     },
   },
-  collections: [Pages, News, Tools, TeamMembers, Partners, ServicePlans, Media, Users],
+  collections: [
+    // Контент
+    Pages,
+    News,
+    Tools,
+    TeamMembers,
+    Partners,
+    Media,
+    // Биллинг
+    Modules,
+    ServicePlans,
+    Entitlements,
+    Orders,
+    Organizations,
+    PaymentEvents,
+    // Доступ
+    Users,
+  ],
   globals: [SiteSettings],
   editor: lexicalEditor(),
   localization: {

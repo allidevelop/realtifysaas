@@ -2,110 +2,144 @@ import type { CollectionConfig } from 'payload'
 
 import { anyone, isAdmin, isAdminOrEditor } from '@/lib/access'
 
-// ServicePlans — тарифы подписки (ТЗ §2, §8.2). Источник истины для /pricing и
-// PricingBlock. Гейтинг доступа по этим лимитам — этап 5.
+// ServicePlans — КАТАЛОГ ПАКЕТОВ доступа к модулям (ТЗ §2, §8.2; модель «пакеты
+// квот по модулям», как у конкурента). Каждая запись = один пакет одного модуля
+// (или бандла). Источник истины для /pricing, PricingBlock и фулфилмента оплат.
+// Деньги — priceMinor (копейки). price/currency — для отображения.
 export const ServicePlans: CollectionConfig = {
   slug: 'service-plans',
-  labels: { singular: 'Тариф', plural: 'Тарифы' },
+  labels: { singular: 'Пакет', plural: 'Пакеты' },
   admin: {
     useAsTitle: 'name',
     group: 'Биллинг',
-    defaultColumns: ['name', 'tier', 'price', 'billingPeriod', 'isActive', 'order'],
+    defaultColumns: ['name', 'module', 'accessType', 'quota', 'periodDays', 'price', 'isActive'],
   },
   access: {
     read: anyone,
     create: isAdminOrEditor,
     update: isAdminOrEditor,
-    // Удаление тарифа влияет на подписки — только админ.
     delete: isAdmin,
   },
   fields: [
     { name: 'name', type: 'text', required: true, localized: true },
     {
-      name: 'tier',
-      type: 'select',
+      name: 'module',
+      type: 'relationship',
+      relationTo: 'modules',
       required: true,
-      defaultValue: 'basic',
-      options: [
-        { label: 'Тест', value: 'test' },
-        { label: 'Базовый', value: 'basic' },
-        { label: 'Профи', value: 'pro' },
-        { label: 'Корпоративный', value: 'corporate' },
-      ],
+      index: true,
+      admin: { description: 'Модуль, к которому даёт доступ пакет.' },
     },
     {
-      name: 'tagline',
-      type: 'text',
-      localized: true,
-      admin: { description: 'Короткий подзаголовок тарифа.' },
+      name: 'grantsModules',
+      type: 'relationship',
+      relationTo: 'modules',
+      hasMany: true,
+      admin: { description: 'Доп. модули бандла (напр. калькулятор + АРМ Аналітика).' },
     },
     {
       type: 'row',
       fields: [
-        { name: 'price', type: 'number', required: true, min: 0, admin: { width: '50%' } },
+        {
+          name: 'accessType',
+          type: 'select',
+          required: true,
+          defaultValue: 'quota',
+          options: [
+            { label: 'Квота (число запросов)', value: 'quota' },
+            { label: 'Период (по времени)', value: 'period' },
+          ],
+          admin: { width: '50%' },
+        },
+        {
+          name: 'packLevel',
+          type: 'select',
+          options: [
+            { label: 'Минимальный', value: 'min' },
+            { label: 'Средний', value: 'mid' },
+            { label: 'Максимальный', value: 'max' },
+          ],
+          admin: { width: '50%' },
+        },
+      ],
+    },
+    {
+      type: 'row',
+      fields: [
+        {
+          name: 'quota',
+          type: 'number',
+          min: 0,
+          admin: {
+            width: '50%',
+            description: 'Число запросов в пакете.',
+            condition: (data) => data?.accessType === 'quota',
+          },
+        },
+        {
+          name: 'periodDays',
+          type: 'number',
+          min: 1,
+          admin: {
+            width: '50%',
+            description: 'Длительность доступа, дней.',
+            condition: (data) => data?.accessType === 'period',
+          },
+        },
+      ],
+    },
+    {
+      type: 'row',
+      fields: [
+        {
+          name: 'priceMinor',
+          type: 'number',
+          required: true,
+          min: 0,
+          admin: { width: '34%', description: 'Цена в копейках (источник истины).' },
+        },
+        {
+          name: 'price',
+          type: 'number',
+          required: true,
+          min: 0,
+          admin: { width: '33%', description: 'Цена для отображения (грн).' },
+        },
         {
           name: 'currency',
           type: 'select',
           required: true,
           defaultValue: 'UAH',
           options: ['UAH', 'USD', 'EUR'],
-          admin: { width: '50%' },
+          admin: { width: '33%' },
         },
       ],
     },
     {
+      name: 'tagline',
+      type: 'text',
+      localized: true,
+      admin: { description: 'Короткий подзаголовок пакета.' },
+    },
+    {
+      name: 'features',
+      type: 'array',
+      labels: { singular: 'Возможность', plural: 'Возможности' },
+      fields: [{ name: 'label', type: 'text', required: true, localized: true }],
+    },
+    {
+      // Оставлено для текущего PlanCard; period-пакеты — 'one-time' по смыслу.
       name: 'billingPeriod',
       type: 'select',
-      required: true,
-      defaultValue: 'month',
+      defaultValue: 'one-time',
       options: [
         { label: 'В месяц', value: 'month' },
         { label: 'В год', value: 'year' },
         { label: 'Разово', value: 'one-time' },
       ],
+      admin: { position: 'sidebar' },
     },
-    {
-      type: 'collapsible',
-      label: 'Лимиты и возможности',
-      fields: [
-        {
-          type: 'row',
-          fields: [
-            {
-              name: 'requestLimit',
-              type: 'number',
-              defaultValue: 0,
-              admin: { width: '50%', description: 'Запросов оценки в период (0 — без оценки).' },
-            },
-            {
-              name: 'historyDepthMonths',
-              type: 'number',
-              defaultValue: 0,
-              admin: { width: '50%', description: 'Глубина ретроспективы, мес.' },
-            },
-          ],
-        },
-        {
-          type: 'row',
-          fields: [
-            { name: 'exportEnabled', type: 'checkbox', defaultValue: false, admin: { width: '33%' } },
-            { name: 'apiAccess', type: 'checkbox', defaultValue: false, admin: { width: '33%' } },
-            {
-              name: 'seats',
-              type: 'number',
-              defaultValue: 1,
-              admin: { width: '34%', description: 'Число мест (для корп.).' },
-            },
-          ],
-        },
-        {
-          name: 'features',
-          type: 'array',
-          labels: { singular: 'Возможность', plural: 'Возможности' },
-          fields: [{ name: 'label', type: 'text', required: true, localized: true }],
-        },
-      ],
-    },
+    { name: 'seats', type: 'number', defaultValue: 1, admin: { position: 'sidebar', description: 'Число мест (для корп.).' } },
     {
       type: 'row',
       fields: [
@@ -118,7 +152,7 @@ export const ServicePlans: CollectionConfig = {
       name: 'ctaLabel',
       type: 'text',
       localized: true,
-      admin: { description: 'Надпись на кнопке (по умолчанию «Выбрать»).' },
+      admin: { description: 'Надпись на кнопке (по умолчанию «Купить»).' },
     },
   ],
 }

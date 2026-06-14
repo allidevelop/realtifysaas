@@ -41,5 +41,11 @@ export const Users: CollectionConfig = {
         { label: 'API', value: 'api' },
       ],
     },
+    {
+      name: 'organization',
+      type: 'relationship',
+      relationTo: 'organizations',
+      admin: { description: 'Корпоративный аккаунт (для мест/безнала).' },
+    },
   ],
 }

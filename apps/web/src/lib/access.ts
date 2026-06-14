@@ -28,3 +28,17 @@ export const publishedOrSignedIn: Access = ({ req }) => {
 }
 
 export const anyone: Access = () => true
+
+export const isSignedIn: Access = ({ req }) => Boolean(req.user)
+
+// Биллинг: владелец записи или админ. Не-админ видит только свои записи
+// (фильтр по полю `user`). Org-доступ уточняется позже (seats, этап 6).
+export const isOwnerOrAdmin: Access = ({ req }) => {
+  if (!req.user) return false
+  if (hasRole(req.user, 'admin')) return true
+  return {
+    user: {
+      equals: req.user.id,
+    },
+  }
+}

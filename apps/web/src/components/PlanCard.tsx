@@ -27,7 +27,7 @@ export function PlanCard({ plan }: { plan: ServicePlan }) {
         <span className="text-4xl font-bold text-ink-900">
           {plan.price === 0 ? 'Бесплатно' : formatPrice(plan.price, plan.currency)}
         </span>
-        {plan.price > 0 && (
+        {plan.price > 0 && plan.billingPeriod && (
           <span className="text-sm text-ink-500">{billingPeriodLabel(plan.billingPeriod)}</span>
         )}
       </div>

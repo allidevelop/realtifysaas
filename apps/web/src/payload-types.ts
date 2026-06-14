@@ -72,8 +72,13 @@ export interface Config {
     tools: Tool;
     'team-members': TeamMember;
     partners: Partner;
-    'service-plans': ServicePlan;
     media: Media;
+    modules: Module;
+    'service-plans': ServicePlan;
+    entitlements: Entitlement;
+    orders: Order;
+    organizations: Organization;
+    'payment-events': PaymentEvent;
     users: User;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
@@ -87,8 +92,13 @@ export interface Config {
     tools: ToolsSelect<false> | ToolsSelect<true>;
     'team-members': TeamMembersSelect<false> | TeamMembersSelect<true>;
     partners: PartnersSelect<false> | PartnersSelect<true>;
-    'service-plans': ServicePlansSelect<false> | ServicePlansSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
+    modules: ModulesSelect<false> | ModulesSelect<true>;
+    'service-plans': ServicePlansSelect<false> | ServicePlansSelect<true>;
+    entitlements: EntitlementsSelect<false> | EntitlementsSelect<true>;
+    orders: OrdersSelect<false> | OrdersSelect<true>;
+    organizations: OrganizationsSelect<false> | OrganizationsSelect<true>;
+    'payment-events': PaymentEventsSelect<false> | PaymentEventsSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
@@ -457,39 +467,82 @@ export interface Partner {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "modules".
+ */
+export interface Module {
+  id: number;
+  name: string;
+  /**
+   * Технический ключ модуля (неизменяемый идентификатор).
+   */
+  key:
+    | 'geoportal'
+    | 'arm-analytics'
+    | 'express-valuation'
+    | 'report-generator'
+    | 'interactive-report'
+    | 'appraiser-calculator';
+  /**
+   * URL-идентификатор. Заполняется автоматически из заголовка, можно изменить.
+   */
+  slug: string;
+  summary?: string | null;
+  icon?: ('map' | 'calc' | 'report' | 'api' | 'bot' | 'spark') | null;
+  accessType: 'quota' | 'period' | 'free';
+  order?: number | null;
+  isActive?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "service-plans".
  */
 export interface ServicePlan {
   id: number;
   name: string;
-  tier: 'test' | 'basic' | 'pro' | 'corporate';
   /**
-   * Короткий подзаголовок тарифа.
+   * Модуль, к которому даёт доступ пакет.
    */
-  tagline?: string | null;
+  module: number | Module;
+  /**
+   * Доп. модули бандла (напр. калькулятор + АРМ Аналітика).
+   */
+  grantsModules?: (number | Module)[] | null;
+  accessType: 'quota' | 'period';
+  packLevel?: ('min' | 'mid' | 'max') | null;
+  /**
+   * Число запросов в пакете.
+   */
+  quota?: number | null;
+  /**
+   * Длительность доступа, дней.
+   */
+  periodDays?: number | null;
+  /**
+   * Цена в копейках (источник истины).
+   */
+  priceMinor: number;
+  /**
+   * Цена для отображения (грн).
+   */
   price: number;
   currency: 'UAH' | 'USD' | 'EUR';
-  billingPeriod: 'month' | 'year' | 'one-time';
   /**
-   * Запросов оценки в период (0 — без оценки).
+   * Короткий подзаголовок пакета.
    */
-  requestLimit?: number | null;
-  /**
-   * Глубина ретроспективы, мес.
-   */
-  historyDepthMonths?: number | null;
-  exportEnabled?: boolean | null;
-  apiAccess?: boolean | null;
-  /**
-   * Число мест (для корп.).
-   */
-  seats?: number | null;
+  tagline?: string | null;
   features?:
     | {
         label: string;
         id?: string | null;
       }[]
     | null;
+  billingPeriod?: ('month' | 'year' | 'one-time') | null;
+  /**
+   * Число мест (для корп.).
+   */
+  seats?: number | null;
   /**
    * Выделить как популярный.
    */
@@ -497,9 +550,44 @@ export interface ServicePlan {
   order?: number | null;
   isActive?: boolean | null;
   /**
-   * Надпись на кнопке (по умолчанию «Выбрать»).
+   * Надпись на кнопке (по умолчанию «Купить»).
    */
   ctaLabel?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "entitlements".
+ */
+export interface Entitlement {
+  id: number;
+  user?: (number | null) | User;
+  /**
+   * Заполняется для корпоративных доступов.
+   */
+  organization?: (number | null) | Organization;
+  module: number | Module;
+  accessType: 'quota' | 'period';
+  quotaTotal?: number | null;
+  /**
+   * БД — источник истины; Redis кэширует горячий счётчик.
+   */
+  quotaRemaining?: number | null;
+  /**
+   * Для period-доступа.
+   */
+  periodEnd?: string | null;
+  status: 'active' | 'exhausted' | 'expired' | 'canceled' | 'past_due';
+  /**
+   * Доступ держится до конца периода, далее — canceled.
+   */
+  cancelAtPeriodEnd?: boolean | null;
+  /**
+   * Заказы, продлившие этот доступ.
+   */
+  sourceOrders?: (number | Order)[] | null;
+  lastConsumedAt?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -511,6 +599,10 @@ export interface User {
   id: number;
   name?: string | null;
   roles?: ('admin' | 'editor' | 'customer' | 'api')[] | null;
+  /**
+   * Корпоративный аккаунт (для мест/безнала).
+   */
+  organization?: (number | null) | Organization;
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -529,6 +621,140 @@ export interface User {
     | null;
   password?: string | null;
   collection: 'users';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "organizations".
+ */
+export interface Organization {
+  id: number;
+  name: string;
+  /**
+   * ЄДРПОУ
+   */
+  edrpou?: string | null;
+  /**
+   * ІПН
+   */
+  ipn?: string | null;
+  billingEmail?: string | null;
+  owner?: (number | null) | User;
+  members?: (number | User)[] | null;
+  /**
+   * Лимит мест (из тарифа); логика seats — этап 6.
+   */
+  seatsLimit?: number | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "orders".
+ */
+export interface Order {
+  id: number;
+  orderNumber?: string | null;
+  user?: (number | null) | User;
+  status: 'new' | 'awaiting_invoice' | 'pending' | 'paid' | 'failed' | 'fulfilled' | 'canceled';
+  customerName?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  billingAddress?: string | null;
+  /**
+   * Реквизиты юрлица для безнала (счёт/акт). Наличие ⇒ B2B.
+   */
+  legalEntity?: {
+    name?: string | null;
+    /**
+     * ЄДРПОУ
+     */
+    edrpou?: string | null;
+    /**
+     * ІПН
+     */
+    ipn?: string | null;
+    iban?: string | null;
+    bankName?: string | null;
+  };
+  items?:
+    | {
+        refType: 'plan' | 'research' | 'library';
+        plan?: (number | null) | ServicePlan;
+        qty?: number | null;
+        /**
+         * Цена позиции в копейках на момент заказа.
+         */
+        priceMinorSnapshot: number;
+        titleSnapshot?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Итого в копейках.
+   */
+  totalMinor: number;
+  currency: 'UAH' | 'USD' | 'EUR';
+  paymentMethod: 'card' | 'invoice';
+  provider?: ('mock' | 'monobank' | 'liqpay') | null;
+  /**
+   * invoiceId провайдера.
+   */
+  paymentRef?: string | null;
+  /**
+   * Рахунок-фактура (PDF).
+   */
+  invoiceFile?: (number | null) | Media;
+  /**
+   * Акт (PDF).
+   */
+  actFile?: (number | null) | Media;
+  paidAt?: string | null;
+  fulfilledAt?: string | null;
+  /**
+   * Токены защищённой выдачи файлов (разовые продажи) — резерв.
+   */
+  downloadTokens?:
+    | {
+        token?: string | null;
+        expiresAt?: string | null;
+        maxDownloads?: number | null;
+        downloadCount?: number | null;
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "payment-events".
+ */
+export interface PaymentEvent {
+  id: number;
+  /**
+   * `{invoiceId}:{status}` — ключ идемпотентности.
+   */
+  eventId: string;
+  provider: 'mock' | 'monobank' | 'liqpay';
+  invoiceId?: string | null;
+  order?: (number | null) | Order;
+  type?: string | null;
+  status?: string | null;
+  signatureValid?: boolean | null;
+  rawPayload?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  result?: ('applied' | 'duplicate' | 'ignored' | 'error') | null;
+  error?: string | null;
+  processedAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -575,12 +801,32 @@ export interface PayloadLockedDocument {
         value: number | Partner;
       } | null)
     | ({
+        relationTo: 'media';
+        value: number | Media;
+      } | null)
+    | ({
+        relationTo: 'modules';
+        value: number | Module;
+      } | null)
+    | ({
         relationTo: 'service-plans';
         value: number | ServicePlan;
       } | null)
     | ({
-        relationTo: 'media';
-        value: number | Media;
+        relationTo: 'entitlements';
+        value: number | Entitlement;
+      } | null)
+    | ({
+        relationTo: 'orders';
+        value: number | Order;
+      } | null)
+    | ({
+        relationTo: 'organizations';
+        value: number | Organization;
+      } | null)
+    | ({
+        relationTo: 'payment-events';
+        value: number | PaymentEvent;
       } | null)
     | ({
         relationTo: 'users';
@@ -842,35 +1088,6 @@ export interface PartnersSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "service-plans_select".
- */
-export interface ServicePlansSelect<T extends boolean = true> {
-  name?: T;
-  tier?: T;
-  tagline?: T;
-  price?: T;
-  currency?: T;
-  billingPeriod?: T;
-  requestLimit?: T;
-  historyDepthMonths?: T;
-  exportEnabled?: T;
-  apiAccess?: T;
-  seats?: T;
-  features?:
-    | T
-    | {
-        label?: T;
-        id?: T;
-      };
-  highlighted?: T;
-  order?: T;
-  isActive?: T;
-  ctaLabel?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "media_select".
  */
 export interface MediaSelect<T extends boolean = true> {
@@ -890,11 +1107,164 @@ export interface MediaSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "modules_select".
+ */
+export interface ModulesSelect<T extends boolean = true> {
+  name?: T;
+  key?: T;
+  slug?: T;
+  summary?: T;
+  icon?: T;
+  accessType?: T;
+  order?: T;
+  isActive?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "service-plans_select".
+ */
+export interface ServicePlansSelect<T extends boolean = true> {
+  name?: T;
+  module?: T;
+  grantsModules?: T;
+  accessType?: T;
+  packLevel?: T;
+  quota?: T;
+  periodDays?: T;
+  priceMinor?: T;
+  price?: T;
+  currency?: T;
+  tagline?: T;
+  features?:
+    | T
+    | {
+        label?: T;
+        id?: T;
+      };
+  billingPeriod?: T;
+  seats?: T;
+  highlighted?: T;
+  order?: T;
+  isActive?: T;
+  ctaLabel?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "entitlements_select".
+ */
+export interface EntitlementsSelect<T extends boolean = true> {
+  user?: T;
+  organization?: T;
+  module?: T;
+  accessType?: T;
+  quotaTotal?: T;
+  quotaRemaining?: T;
+  periodEnd?: T;
+  status?: T;
+  cancelAtPeriodEnd?: T;
+  sourceOrders?: T;
+  lastConsumedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "orders_select".
+ */
+export interface OrdersSelect<T extends boolean = true> {
+  orderNumber?: T;
+  user?: T;
+  status?: T;
+  customerName?: T;
+  email?: T;
+  phone?: T;
+  billingAddress?: T;
+  legalEntity?:
+    | T
+    | {
+        name?: T;
+        edrpou?: T;
+        ipn?: T;
+        iban?: T;
+        bankName?: T;
+      };
+  items?:
+    | T
+    | {
+        refType?: T;
+        plan?: T;
+        qty?: T;
+        priceMinorSnapshot?: T;
+        titleSnapshot?: T;
+        id?: T;
+      };
+  totalMinor?: T;
+  currency?: T;
+  paymentMethod?: T;
+  provider?: T;
+  paymentRef?: T;
+  invoiceFile?: T;
+  actFile?: T;
+  paidAt?: T;
+  fulfilledAt?: T;
+  downloadTokens?:
+    | T
+    | {
+        token?: T;
+        expiresAt?: T;
+        maxDownloads?: T;
+        downloadCount?: T;
+        id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "organizations_select".
+ */
+export interface OrganizationsSelect<T extends boolean = true> {
+  name?: T;
+  edrpou?: T;
+  ipn?: T;
+  billingEmail?: T;
+  owner?: T;
+  members?: T;
+  seatsLimit?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "payment-events_select".
+ */
+export interface PaymentEventsSelect<T extends boolean = true> {
+  eventId?: T;
+  provider?: T;
+  invoiceId?: T;
+  order?: T;
+  type?: T;
+  status?: T;
+  signatureValid?: T;
+  rawPayload?: T;
+  result?: T;
+  error?: T;
+  processedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "users_select".
  */
 export interface UsersSelect<T extends boolean = true> {
   name?: T;
   roles?: T;
+  organization?: T;
   updatedAt?: T;
   createdAt?: T;
   email?: T;
