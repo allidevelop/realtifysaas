@@ -11,12 +11,15 @@
     "typecheck": "tsc --noEmit",
     "payload": "payload",
     "generate:types": "payload generate:types",
-    "generate:importmap": "payload generate:importmap"
+    "generate:importmap": "payload generate:importmap",
+    "seed": "payload run src/seed/index.ts"
   },
   "dependencies": {
     "@payloadcms/db-postgres": "3.85.1",
     "@payloadcms/next": "3.85.1",
+    "@payloadcms/plugin-seo": "3.85.1",
     "@payloadcms/richtext-lexical": "3.85.1",
+    "clsx": "2.1.1",
     "graphql": "16.14.2",
     "next": "15.4.11",
     "payload": "3.85.1",
@@ -26,11 +29,14 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "3.2.0",
+    "@tailwindcss/postcss": "4.3.1",
+    "@tailwindcss/typography": "0.5.20",
     "@types/node": "22.19.21",
     "@types/react": "19.2.17",
     "@types/react-dom": "19.2.3",
     "eslint": "9.18.0",
     "eslint-config-next": "15.4.11",
+    "tailwindcss": "4.3.1",
     "typescript": "5.7.3"
   }
 }

@@ -27,6 +27,9 @@ cd apps/engine && uv run uvicorn app.main:app --reload   # http://localhost:8000
 - Линт/типы (web): `pnpm lint`, `pnpm typecheck`
 - Линт/типы (engine): `uv run ruff check`, `uv run mypy`; тесты: `uv run pytest`
 - БД: `docker compose up -d` / `down` (данные в volume `pgdata`); сброс начисто: `docker compose down -v`
+- Payload codegen (web): `pnpm --filter web generate:types` и `generate:importmap` — после изменения коллекций/полей.
+- Seed демо-контента: `GET /seed?secret=$PAYLOAD_SECRET` на dev-сервере (`pnpm --filter web seed` падает на Node 26 — баг tsx, см. DECISIONS).
+- БД на хосте: контейнер слушает порт **5433** (5432 занят локальной службой), `DATABASE_URL=...localhost:5433/geo`.
 
 ## Конвенции
 - TypeScript strict; Python типизирован (mypy). Без `any` и бездумных `# type: ignore`.

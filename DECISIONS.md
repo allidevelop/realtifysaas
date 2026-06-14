@@ -4,6 +4,32 @@
 
 ---
 
+### 2026-06-15 · Этап 1 · UI-стек: Tailwind v4 + typography
+- **Решение:** `tailwindcss@4.3.1` + `@tailwindcss/postcss@4.3.1` (конфиг в CSS, `@theme`-токены), `@tailwindcss/typography@0.5.20` для richtext (`prose`), `clsx@2.1.1`. Tailwind применяется только в группе `(frontend)`; админка Payload — свои стили.
+- **Альтернативы:** Tailwind v3 + JS-конфиг; shadcn/ui сразу.
+- **Причина:** v4 актуальна и проще (CSS-first). shadcn/ui наложим позже при усложнении UI (ТЗ §5).
+
+### 2026-06-15 · Этап 1 · Локализация Payload uk/en включена на старте
+- **Решение:** `localization: { locales: [uk, en], defaultLocale: 'uk', fallback: true }`; ключевые текстовые поля помечены `localized: true`. Интерфейс фронта пока uk; `next-intl` для UI — позже.
+- **Альтернативы:** добавить локализацию позже.
+- **Причина:** ретрофит локализации в Payload требует миграции данных — дешевле заложить сразу (ТЗ §13). UI-i18n не входит в DoD этапа 1, делаем отдельным проходом.
+
+### 2026-06-15 · Этап 1 · SEO через @payloadcms/plugin-seo
+- **Решение:** `seoPlugin@3.85.1` добавляет группу `meta` (title/description/image) в pages/news/tools; на фронте — `generateMetadata` (canonical/OG/Twitter), `sitemap.ts`, `robots.ts` (в корне `src/app/`), JSON-LD (Article/Product+Offer).
+- **Причина:** канонический путь Payload; покрывает ТЗ §13. **Важно:** `robots.ts`/`sitemap.ts` должны лежать в корне `app/`, а не в route-группе `(frontend)` — иначе `/robots.txt` отдаёт 404.
+
+### 2026-06-15 · Этап 1 · Pages.section разделяет /slug и /legal/slug
+- **Решение:** в Pages поле `section` (general|legal). `/[slug]` рендерит general, `/legal/[slug]` — legal; перекрёстный доступ закрыт `notFound()`.
+- **Причина:** одна коллекция Pages для всех статичных страниц, но чистые URL для юр-документов (ТЗ §8.1).
+
+### 2026-06-15 · Этап 1 · Seed выполняется через route /seed, не `payload run`
+- **Решение:** логика наполнения — в `src/seed/seed.ts` (`runSeed(payload)`); вызывается из (а) `payload run src/seed/index.ts` и (б) `GET /seed?secret=$PAYLOAD_SECRET` (рантайм Next).
+- **Причина:** `payload run` использует `tsx@4.22.4`, который на **Node 26 (Windows)** падает с `ENOENT node:crypto?tsx-namespace` (баг резолва node:-билтинов; это последняя версия tsx, фикса нет). Route работает в рантайме Next без tsx. Гард по секрету; идемпотентно. При совместимой версии Node остаётся доступен и `pnpm --filter web seed`.
+
+### 2026-06-15 · Этап 1 · PostGIS spatial_ref_sys в схеме gis — критично для Payload push
+- **Решение (подтверждено на практике):** держать PostGIS в схеме `gis` (см. запись этапа 0). При сбросе/изменении схемы Payload интерактивный drizzle-push не зависает, т.к. `public` чистая.
+- **Причина:** при значимых изменениях схемы public сбрасывали через `DROP SCHEMA public CASCADE; CREATE SCHEMA public;` (gis не трогаем) — Payload пересоздаёт таблицы без вопросов.
+
 ### 2026-06-14 · Этап 0 · Зафиксированные версии стека
 - **Решение:** установлены и закреплены версии:
   - web: `next@15.4.11`, `react@19.2.7`, `react-dom@19.2.7`, `payload@3.85.1` и `@payloadcms/{next,db-postgres,richtext-lexical}@3.85.1`, `graphql@16.14.2`, `sharp@0.35.1`; tooling `typescript@5.7.3`, `eslint@9.18.0`, `eslint-config-next@15.4.11`.
