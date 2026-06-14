@@ -1,0 +1,42 @@
+# Secrets
+.env
+.env.local
+.env.*.local
+*.pem
+
+# Node
+node_modules/
+.pnpm-store/
+.next/
+out/
+dist/
+build/
+*.tsbuildinfo
+.turbo/
+
+# Payload
+apps/web/.payload/
+apps/web/media/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+*.egg-info/
+
+# OS / editors
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Source archive (bootstrap)
+files.zip

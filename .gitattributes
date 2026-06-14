@@ -1,0 +1,9 @@
+# Нормализация переводов строк: в репозитории — LF.
+* text=auto eol=lf
+
+# Бинарные/локфайлы — без вмешательства.
+*.png binary
+*.jpg binary
+*.ico binary
+pnpm-lock.yaml -text
+uv.lock -text
