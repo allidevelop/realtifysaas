@@ -21,6 +21,8 @@
     "@payloadcms/richtext-lexical": "3.85.1",
     "clsx": "2.1.1",
     "graphql": "16.14.2",
+    "ioredis": "5.11.1",
+    "jose": "6.2.3",
     "next": "15.4.11",
     "payload": "3.85.1",
     "react": "19.2.7",
