@@ -29,6 +29,12 @@ export function AccountNav({ user }: { user: User | null }) {
                 {MODULE_META[key].title}
               </Link>
             ))}
+            <Link
+              href="/account/billing"
+              className="whitespace-nowrap text-sm font-medium text-ink-700 hover:text-brand-700"
+            >
+              Білінг
+            </Link>
           </nav>
         )}
 

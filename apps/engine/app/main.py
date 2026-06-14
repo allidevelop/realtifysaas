@@ -9,6 +9,7 @@ from __future__ import annotations
 from fastapi import FastAPI
 
 from app import __version__
+from app.api.reports import router as reports_router
 from app.schemas import HealthResponse
 
 app = FastAPI(
@@ -16,6 +17,9 @@ app = FastAPI(
     version=__version__,
     description="Движок оценки, гео-API, публичный API, ETL, Telegram-бот.",
 )
+
+# Биллинг-документы (счёт/акт PDF) — этап 5 (ТЗ §11).
+app.include_router(reports_router)
 
 
 @app.get("/health", response_model=HealthResponse, tags=["system"])

@@ -3,7 +3,7 @@ import Link from 'next/link'
 
 import { PlanCard } from '@/components/PlanCard'
 import { Section, SectionHeading } from '@/components/Section'
-import { getServicePlans } from '@/lib/queries'
+import { getPacksGroupedByModule } from '@/lib/billing/catalog'
 import { buildMetadata } from '@/lib/seo'
 
 export const revalidate = 300
@@ -12,20 +12,20 @@ export function generateMetadata(): Metadata {
   return buildMetadata({
     title: 'Тарифы',
     description:
-      'Тарифы Realtify: подписки на инструменты оценки и аналитики, корпоративные планы, безнал для юрлиц.',
+      'Пакеты Realtify по модулям: карта, оценка, отчёты, аналитика. Квоты и периоды; для банков и юрлиц — безнал (счёт/акт).',
     path: '/pricing',
   })
 }
 
 export default async function PricingPage() {
-  const plans = await getServicePlans()
+  const groups = await getPacksGroupedByModule()
+  const allPacks = groups.flatMap((g) => g.packs)
 
-  // JSON-LD: каждый тариф как Offer (ТЗ §13).
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Product',
-    name: 'Realtify — подписки',
-    offers: plans.map((p) => ({
+    name: 'Realtify — пакети модулів',
+    offers: allPacks.map((p) => ({
       '@type': 'Offer',
       name: p.name,
       price: p.price,
@@ -40,23 +40,31 @@ export default async function PricingPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       <SectionHeading
-        title="Тарифы и подписки"
-        intro="Выберите план под свои задачи. Для банков и юрлиц — оплата по безналу (счёт/акт)."
+        title="Пакети та тарифи"
+        intro="Кожен модуль — окремими пакетами квот або за періодом. Для банків і юросіб — оплата за рахунком (рахунок-фактура → акт)."
       />
-      {plans.length === 0 ? (
-        <p className="text-center text-ink-500">Тарифы ещё не настроены в CMS.</p>
+
+      {groups.length === 0 ? (
+        <p className="text-center text-ink-500">Пакети ще не налаштовані.</p>
       ) : (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-          {plans.map((plan) => (
-            <PlanCard key={plan.id} plan={plan} />
+        <div className="space-y-14">
+          {groups.map((g) => (
+            <div key={g.moduleKey}>
+              <h2 className="mb-6 text-center text-2xl font-bold text-ink-900">{g.module.name}</h2>
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {g.packs.map((pack) => (
+                  <PlanCard key={pack.id} plan={pack} />
+                ))}
+              </div>
+            </div>
           ))}
         </div>
       )}
-      <p className="mt-10 text-center text-sm text-ink-500">
-        Юридическим лицам и банкам доступна оплата по счёту (рахунок-фактура → акт). Реквизиты — на
-        странице{' '}
+
+      <p className="mt-12 text-center text-sm text-ink-500">
+        Юридичним особам і банкам доступна оплата за рахунком (рахунок-фактура → акт). Деталі —{' '}
         <Link className="text-brand-600" href="/contacts">
-          контактов
+          у контактах
         </Link>
         .
       </p>

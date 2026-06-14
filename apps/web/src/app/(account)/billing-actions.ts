@@ -19,10 +19,21 @@ export async function buyPackAction(formData: FormData): Promise<void> {
   if (!user) redirect('/account/login')
   if (!Number.isFinite(packId)) redirect('/account/billing?error=bad-pack')
 
+  // Реквизиты юрлица — только для безнала.
+  const legalEntity =
+    paymentMethod === 'invoice'
+      ? {
+          name: String(formData.get('le_name') ?? '').trim() || undefined,
+          edrpou: String(formData.get('le_edrpou') ?? '').trim() || undefined,
+          ipn: String(formData.get('le_ipn') ?? '').trim() || undefined,
+        }
+      : undefined
+
   const result = await startCheckout({
     user: { id: user.id, email: user.email, name: user.name },
     packId,
     paymentMethod,
+    legalEntity,
   })
 
   if (result.mode === 'invoice') {
