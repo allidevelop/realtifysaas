@@ -1,22 +1,28 @@
-import type { Payload } from 'payload'
+import type { Payload, PayloadRequest } from 'payload'
 
 import type { Entitlement, Order, ServicePlan } from '@/payload-types'
 
-import { findActiveEntitlement } from './entitlements'
 import { getRedis, quotaKey } from './redis'
 
 // Идемпотентная выдача доступов по оплаченному заказу (ТЗ §11).
-// Вызывается из вебхука (M3) и хука Orders afterChange (M3).
-export async function applyPaidOrder(payload: Payload, orderId: number | string): Promise<void> {
+// Вызывается из хука Orders.afterChange (передаёт req — ВАЖНО: хук исполняется
+// до коммита, поэтому вложенные операции должны идти в той же транзакции, иначе
+// читают старое состояние заказа). req также прокидывается из вебхука косвенно.
+export async function applyPaidOrder(
+  payload: Payload,
+  orderId: number | string,
+  req?: PayloadRequest,
+): Promise<void> {
   const order = (await payload.findByID({
     collection: 'orders',
     id: orderId,
     depth: 2,
     overrideAccess: true,
+    req,
   })) as Order
 
   if (!order) return
-  if (order.status === 'fulfilled') return // уже исполнен — идемпотентность
+  if (order.status === 'fulfilled') return // идемпотентность
   if (order.status !== 'paid') return // выдаём только по paid
 
   const userId = idOf(order.user)
@@ -30,9 +36,8 @@ export async function applyPaidOrder(payload: Payload, orderId: number | string)
     const pack = typeof item.plan === 'object' ? (item.plan as ServicePlan) : null
     if (!pack) continue
     const qty = item.qty ?? 1
-    const moduleIds = collectModuleIds(pack)
-    for (const moduleId of moduleIds) {
-      await grantEntitlement(payload, userId, moduleId, pack, qty, Number(order.id))
+    for (const moduleId of collectModuleIds(pack)) {
+      await grantEntitlement(payload, userId, moduleId, pack, qty, Number(order.id), req)
     }
   }
 
@@ -41,7 +46,30 @@ export async function applyPaidOrder(payload: Payload, orderId: number | string)
     id: orderId,
     data: { status: 'fulfilled', fulfilledAt: new Date().toISOString() },
     overrideAccess: true,
+    req,
   })
+}
+
+async function findActiveEntitlement(
+  payload: Payload,
+  userId: number,
+  moduleId: number,
+  accessType: 'quota' | 'period',
+  req?: PayloadRequest,
+): Promise<Entitlement | null> {
+  const res = await payload.find({
+    collection: 'entitlements',
+    where: {
+      user: { equals: userId },
+      module: { equals: moduleId },
+      accessType: { equals: accessType },
+      status: { equals: 'active' },
+    },
+    limit: 1,
+    overrideAccess: true,
+    req,
+  })
+  return res.docs[0] ?? null
 }
 
 function collectModuleIds(pack: ServicePlan): number[] {
@@ -62,9 +90,10 @@ async function grantEntitlement(
   pack: ServicePlan,
   qty: number,
   orderId: number,
+  req?: PayloadRequest,
 ): Promise<void> {
   const accessType = pack.accessType === 'period' ? 'period' : 'quota'
-  const existing = await findActiveEntitlement(userId, moduleId, accessType)
+  const existing = await findActiveEntitlement(payload, userId, moduleId, accessType, req)
 
   if (accessType === 'quota') {
     const add = (pack.quota ?? 0) * qty
@@ -80,6 +109,7 @@ async function grantEntitlement(
           sourceOrders: appendOrder(existing, orderId),
         },
         overrideAccess: true,
+        req,
       })
       await getRedis().del(quotaKey(existing.id))
     } else {
@@ -95,6 +125,7 @@ async function grantEntitlement(
           sourceOrders: [orderId],
         },
         overrideAccess: true,
+        req,
       })
       await getRedis().del(quotaKey(created.id))
     }
@@ -115,6 +146,7 @@ async function grantEntitlement(
       id: existing.id,
       data: { periodEnd: newEnd, status: 'active', sourceOrders: appendOrder(existing, orderId) },
       overrideAccess: true,
+      req,
     })
   } else {
     await payload.create({
@@ -128,6 +160,7 @@ async function grantEntitlement(
         sourceOrders: [orderId],
       },
       overrideAccess: true,
+      req,
     })
   }
 }

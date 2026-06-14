@@ -1,6 +1,7 @@
 import type { CollectionConfig } from 'payload'
 
 import { isAdmin, isOwnerOrAdmin, isSignedIn } from '@/lib/access'
+import { applyPaidOrder } from '@/lib/billing/fulfillment'
 
 // Orders — заказы/покупки (ТЗ §8.2, §11). Имена полей по ТЗ.
 // Наличие legalEntity ⇒ безнал (B2B). afterChange-хук фулфилмента подключается
@@ -30,6 +31,14 @@ export const Orders: CollectionConfig = {
           data.orderNumber = `RT-${ymd}-${rand}`
         }
         return data
+      },
+    ],
+    // Фулфилмент: переход в paid → выдать/продлить доступы (идемпотентно).
+    afterChange: [
+      async ({ doc, previousDoc, req, operation }) => {
+        if (operation === 'update' && previousDoc?.status !== 'paid' && doc.status === 'paid') {
+          await applyPaidOrder(req.payload, doc.id, req)
+        }
       },
     ],
   },
