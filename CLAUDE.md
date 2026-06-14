@@ -29,7 +29,14 @@ cd apps/engine && uv run uvicorn app.main:app --reload   # http://localhost:8000
 - БД: `docker compose up -d` / `down` (данные в volume `pgdata`); сброс начисто: `docker compose down -v`
 - Payload codegen (web): `pnpm --filter web generate:types` и `generate:importmap` — после изменения коллекций/полей.
 - Seed демо-контента: `GET /seed?secret=$PAYLOAD_SECRET` на dev-сервере (`pnpm --filter web seed` падает на Node 26 — баг tsx, см. DECISIONS).
-- БД на хосте: контейнер слушает порт **5433** (5432 занят локальной службой), `DATABASE_URL=...localhost:5433/geo`.
+- Порты на хосте: Postgres-контейнер — **5433** (5432 занят локальной службой); Redis-контейнер — **6380** (6379 занят Memurai). `DATABASE_URL=...localhost:5433/geo`, `REDIS_URL=redis://localhost:6380`.
+
+## Биллинг и кабинет (этап 5)
+- Модель — **пакеты квот по модулям** (Modules/ServicePlans-пакеты/Entitlements/Orders/Organizations/PaymentEvents). Деньги — копейки (`priceMinor`/`totalMinor`).
+- Движок: `apps/web/src/lib/billing/*` (entitlements/quota/fulfillment/providers/checkout/documents). Гейтинг: `middleware.ts` (presence) + `requireUser` в страницах.
+- Платежи: `PAYMENTS_PROVIDER=mock|monobank`. Локальный e2e — мок-провайдер + `/account/mock-pay`. Вебхуки: `/webhooks/{provider}` (подпись + идемпотентность). Боевые ключи Monobank — только на проде.
+- Безнал PDF: engine `POST /api/reports/{invoice,act}` (fpdf2-стаб; прод — docx+LibreOffice); выдача через `/account/orders/[id]/{invoice,act}`.
+- Engine для PDF: `cd apps/engine && uv run uvicorn app.main:app --reload` (нужен для безнала).
 
 ## Конвенции
 - TypeScript strict; Python типизирован (mypy). Без `any` и бездумных `# type: ignore`.

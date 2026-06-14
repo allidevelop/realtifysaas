@@ -29,7 +29,8 @@ services:
     container_name: geo_redis
     restart: unless-stopped
     ports:
-      - "6379:6379"
+      # Хост-порт 6380, чтобы не конфликтовать с локальным Redis/Memurai на 6379.
+      - "6380:6379"
     volumes:
       - redisdata:/data
     healthcheck:

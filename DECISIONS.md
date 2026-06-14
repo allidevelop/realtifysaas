@@ -4,6 +4,47 @@
 
 ---
 
+### 2026-06-15 · Этап 5 (билинг) · Модель «пакеты квот по модулям» вместо единых тарифов
+- **Решение:** монетизация — **пакеты квот/периода по каждому модулю** (как у конкурента gisuvecon), а не единый тариф Test/Basic/Pro/Corporate из ТЗ §8.2. Каждый модуль (`geoportal`/`arm-analytics`/`express-valuation`/`report-generator`/`interactive-report`/`appraiser-calculator`) продаётся отдельными пакетами (Мин/Сред/Макс) со своим счётчиком; часть — по времени (Інтерактивний звіт). Бандлы — через `grantsModules` (Калькулятор+АРМ Аналітика).
+- **Следствие модели данных:** новые коллекции `Modules`, `Entitlements` (поглощают «Subscriptions» ТЗ: period-entitlement = подписка), `Orders`, `Organizations`, `PaymentEvents`; `ServicePlans` эволюционировала в каталог пакетов (`module/grantsModules/accessType/quota/periodDays/packLevel/priceMinor`); убраны single-tier-поля (requestLimit/historyDepthMonths/exportEnabled/apiAccess/tier — необязательны/удалены).
+- **Причина:** прямой анализ кабинета конкурента + явное требование владельца («пакеты квот»). Подтверждено: реальные лестницы цен 10/20/50, 20/50/100, 5/10/20, 180 дней.
+
+### 2026-06-15 · Этап 5 · Деньги — целые копейки (minor units)
+- **Решение:** суммы хранятся как целые `priceMinor`/`totalMinor` (копейки); `price` (грн) — только для отображения. Совпадает с форматом Monobank (`amount` в копейках).
+- **Причина:** избегаем ошибок округления float в платежах.
+
+### 2026-06-15 · Этап 5 · Платежи: Monobank Acquiring первым, за провайдер-агностик адаптером + мок
+- **Решение:** интерфейс `PaymentProvider` (createInvoice/verifyWebhook/parseWebhook/mapStatus); адаптеры `monobank` (POST /api/merchant/invoice/create, X-Token; вебхук — ECDSA X-Sign против pubkey, кэш Redis) и `mock` (HMAC X-Mock-Sign, для локального e2e без боевых ключей). Выбор — `PAYMENTS_PROVIDER`. ПриватБанк = LiqPay — следующий адаптер.
+- **Причина:** рынок Украина; Monobank — выбор владельца; боевые ключи только на проде (ТЗ §11), поэтому мок для локального e2e.
+
+### 2026-06-15 · Этап 5 · Вебхуки на `/webhooks/{provider}`, не под `/api`
+- **Решение:** обработчики в route-группе `(webhooks)`, путь `/webhooks/mock|monobank` (nodejs runtime, сырое тело для подписи). Идемпотентность — `PaymentEvents.eventId` уникальный (`{invoiceId}:{status}`).
+- **Причина:** `/api/*` занят Payload `api/[...slug]` — коллизия.
+
+### 2026-06-15 · Этап 5 · Фулфилмент в хуке Orders.afterChange с прокидыванием `req` (транзакция)
+- **Решение:** переход заказа в `paid` → `applyPaidOrder(req.payload, id, req)`; `req` обязателен — хук исполняется ДО коммита, и вложенные find/create/update должны идти в той же транзакции (иначе читают старый статус заказа и фулфилмент не срабатывает).
+- **Причина:** обнаружено на e2e: без `req` заказ оставался `paid` без выдачи доступа.
+
+### 2026-06-15 · Этап 5 · Квоты: Redis Lua check-and-decrement + write-through в БД
+- **Решение:** атомарное списание через Lua (страж oversell), засев ключа из БД (`SET NX`), синхронный write-through `quotaRemaining` + флаг `exhausted` при 0; идемпотентность «запуска» через `runId` (`SET NX EX 60`). БД — источник истины, Redis — горячий счётчик.
+- **e2e:** 2→1→0(exhausted)→denied; повтор runId не списывает.
+
+### 2026-06-15 · Этап 5 · Хост-порт Redis — 6380 (конфликт с Memurai на 6379)
+- **Решение:** контейнер `geo_redis` → `6380:6379`; `REDIS_URL=redis://localhost:6380`.
+- **Причина:** на машине разработки запущен **Memurai** (Redis-совместимый сервер) на 127.0.0.1:6379 — Node (IPv4) подключался к нему, а контейнер был затенён (аналогично Postgres→5433). 6380 убирает конфликт.
+
+### 2026-06-15 · Этап 5 · Гейтинг: middleware presence-гейт + авторитет в server-components
+- **Решение:** `middleware.ts` лишь проверяет наличие куки `payload-token` (server-only `PAYLOAD_SECRET` не доступен в edge-рантайме); подпись/доступ верифицируются в страницах через `requireUser` → `payload.auth`, тонкие проверки модуль/квота — там же. `jose` оставлен в зависимостях под будущий nodejs-middleware.
+- **Причина:** надёжно и без экспериментальных флагов; защита всё равно авторитетная (на сервере).
+
+### 2026-06-15 · Этап 5 · Безнал PDF — в engine (fpdf2-стаб сейчас)
+- **Решение:** `apps/engine/app/api/reports.py` — `POST /api/reports/{invoice,act}` (fpdf2, авто-поиск Unicode-шрифта для кириллицы). Web строит запрос из заказа и стримит PDF через защищённый роут `/account/orders/[id]/{invoice,act}` (owner/admin; акт — после оплаты).
+- **TODO (прод):** заменить fpdf2-стаб на python-docx-шаблон → headless LibreOffice (ТЗ §5).
+
+### 2026-06-15 · Этап 5 · Re-приоритизация roadmap: этап 5 (билинг) раньше этапов 2–4
+- **Решение:** по требованию владельца билинг/кабинет/платные модули сделаны до геопортала/данных/оценки. Сами модули — gated-заглушки (списывают квоту), глубокая логика (карта/AVM) — на этапах 2–4. CMS/блог — не развиваем (архитектура есть).
+- **Причина:** «самое главное — сложная часть платных модулей и платежей».
+
 ### 2026-06-15 · Этап 1 · UI-стек: Tailwind v4 + typography
 - **Решение:** `tailwindcss@4.3.1` + `@tailwindcss/postcss@4.3.1` (конфиг в CSS, `@theme`-токены), `@tailwindcss/typography@0.5.20` для richtext (`prose`), `clsx@2.1.1`. Tailwind применяется только в группе `(frontend)`; админка Payload — свои стили.
 - **Альтернативы:** Tailwind v3 + JS-конфиг; shadcn/ui сразу.
