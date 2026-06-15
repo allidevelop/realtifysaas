@@ -67,6 +67,26 @@ SELECT unit_id, period, segment, operation,
 UNION ALL
 SELECT unit_id, period, segment, operation, 'count', cnt, 'UAH'
   FROM agg
+-- Доп. рыночные метрики для «Інтерактивного звіту». Истинные значения требуют данных
+-- об аренде/сделках/днях-на-рынке (нет в demo) → синтетика, детерминированная от
+-- АТЕ/месяца/сегмента. Считаются здесь, чтобы переживать TRUNCATE+recompute.
+UNION ALL
+SELECT unit_id, period, segment, operation, 'cap_rate',
+       round((7.0 + (CASE WHEN segment = 'commercial' THEN 2.0 ELSE 0 END)
+              + mod(unit_id + right(period, 2)::int, 5) * 0.4)::numeric, 2), '%'
+  FROM agg
+UNION ALL
+SELECT unit_id, period, segment, operation, 'bargain_index',
+       round((4.0 + mod(unit_id * 3 + right(period, 2)::int, 6) * 0.7)::numeric, 2), '%'
+  FROM agg
+UNION ALL
+SELECT unit_id, period, segment, operation, 'exposure_days',
+       (45 + mod(unit_id + right(period, 2)::int * 2, 9) * 9)::numeric, 'day'
+  FROM agg
+UNION ALL
+SELECT unit_id, period, segment, operation, 'occupancy_pct',
+       (72 + mod(unit_id + right(period, 2)::int, 8) * 3)::numeric, '%'
+  FROM agg WHERE segment = 'commercial'
 """
 
 
