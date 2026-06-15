@@ -2,6 +2,7 @@ import crypto from 'crypto'
 
 import { Paywall } from '@/components/account/Paywall'
 import { Icon } from '@/components/Icon'
+import { UnitCombobox } from '@/components/valuation/UnitCombobox'
 import { requireUser } from '@/lib/auth'
 import { resolveModuleAccess } from '@/lib/billing/entitlements'
 import { MODULE_META } from '@/lib/billing/modules'
@@ -30,11 +31,8 @@ export default async function ReportGeneratorPage({ searchParams }: SP) {
       </div>
 
       {access.allowed ? (
-        <Form
-          quota={access.quotaRemaining ?? 0}
-          units={await getAdminUnitOptions(2)}
-          error={sp.error}
-        />
+        // Уровень областей (level 1): отчёт даёт разрез по подчинённым районам.
+        <Form quota={access.quotaRemaining ?? 0} units={await getAdminUnitOptions(1)} error={sp.error} />
       ) : (
         <Paywall moduleKey="report-generator" reason={access.reason} />
       )}
@@ -52,12 +50,6 @@ function Form({
   error?: string
 }) {
   const runId = crypto.randomUUID()
-  const grouped = new Map<string, typeof units>()
-  for (const u of units) {
-    const k = u.parentName ?? '—'
-    if (!grouped.has(k)) grouped.set(k, [])
-    grouped.get(k)!.push(u)
-  }
 
   return (
     <form
@@ -68,29 +60,27 @@ function Form({
       <input type="hidden" name="runId" value={runId} />
       {error && (
         <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-700">
-          {error === 'quota' ? 'Квоту вичерпано — придбайте пакет.' : 'Заповніть район і площу.'}
+          {error === 'quota'
+            ? 'Квоту вичерпано — придбайте пакет.'
+            : 'Оберіть територіальну одиницю.'}
         </p>
       )}
+      <p className="rounded-lg bg-ink-100/40 px-3 py-2 text-xs text-ink-600">
+        Статистичний звіт середніх цін: динаміка по місяцях і кварталах (грн і USD за м²) +
+        розріз по підпорядкованих районах. PDF на друк/експорт.
+      </p>
       <label className="block text-sm">
-        <span className="mb-1 block font-medium text-ink-700">Територіальна одиниця</span>
-        <select name="adminUnitId" required className="geo-select">
-          {[...grouped.entries()].map(([parent, list]) => (
-            <optgroup key={parent} label={parent}>
-              {list.map((u) => (
-                <option key={u.id} value={u.id}>{u.name}</option>
-              ))}
-            </optgroup>
-          ))}
-        </select>
+        <span className="mb-1 block font-medium text-ink-700">Область</span>
+        <UnitCombobox units={units} name="adminUnitId" />
       </label>
       <div className="grid grid-cols-2 gap-3">
         <label className="block text-sm">
           <span className="mb-1 block font-medium text-ink-700">Сегмент</span>
           <select name="segment" className="geo-select" defaultValue="apartment">
-            <option value="apartment">Квартира</option>
-            <option value="house">Будинок</option>
-            <option value="commercial">Комерція</option>
-            <option value="land">Земля</option>
+            <option value="apartment">Вторинний ринок квартир</option>
+            <option value="house">Будинки / домоволодіння</option>
+            <option value="commercial">Комерційна нерухомість</option>
+            <option value="land">Земельні ділянки</option>
           </select>
         </label>
         <label className="block text-sm">
@@ -101,25 +91,11 @@ function Form({
           </select>
         </label>
       </div>
-      <div className="grid grid-cols-3 gap-3">
-        <label className="block text-sm">
-          <span className="mb-1 block font-medium text-ink-700">Площа, м²</span>
-          <input name="area" type="number" min={1} step="0.1" required defaultValue={65} className="geo-select" />
-        </label>
-        <label className="block text-sm">
-          <span className="mb-1 block font-medium text-ink-700">Поверх</span>
-          <input name="floor" type="number" min={1} className="geo-select" />
-        </label>
-        <label className="block text-sm">
-          <span className="mb-1 block font-medium text-ink-700">Поверхів</span>
-          <input name="totalFloors" type="number" min={1} className="geo-select" />
-        </label>
-      </div>
       <button
         type="submit"
         className="w-full rounded-lg bg-brand-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-brand-700"
       >
-        Згенерувати звіт (PDF, −1 запит)
+        Згенерувати статистичний звіт (PDF, −1 запит)
       </button>
       <p className="text-center text-xs text-ink-500">Залишок квоти: {quota}</p>
     </form>
