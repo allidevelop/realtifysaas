@@ -49,35 +49,39 @@ docker compose exec -T postgres psql -U "${POSTGRES_USER:-geo}" -d "${POSTGRES_D
 docker compose exec -T postgres psql -U "${POSTGRES_USER:-geo}" -d "${POSTGRES_DB:-geo}" \
   < infra/sql/02-gis-admin.sql >/dev/null 2>&1 || true
 
+# Схема Payload + сид ДО сборки: next build пререндерит страницы и читает таблицы
+# Payload, поэтому они должны существовать. Push схемы — dev-операция (в production
+# Payload его не делает), поэтому разово запускаем сид в NODE_ENV=development.
+# Сид идемпотентен (повторно не дублирует). На реальном проде — миграции вместо push.
+echo "==> [4/7] схема Payload + сид (контент, модули, пакеты, админ)"
+NODE_ENV=development pnpm --filter web seed
+
 if [ $SKIP_BUILD = 0 ]; then
-  echo "==> [4/7] сборка web (прод)"
+  echo "==> [5/7] сборка web (прод)"
   pnpm --filter web build
 else
-  echo "==> [4/7] сборка web — пропущена"
+  echo "==> [5/7] сборка web — пропущена"
 fi
 
 if [ $SKIP_DATA = 0 ]; then
-  echo "==> [5/7] данные: реальные границы + демо-listings + Prozorro"
+  echo "==> [6/7] данные: реальные границы + демо-listings + Prozorro"
   pushd apps/engine >/dev/null
   uv run python -m etl.import_boundaries --source geoboundaries --demo-metrics
   uv run python -m etl.generate_listings           # демо-listings из агрегатов
   uv run python -m etl.pipeline --source prozorro  # реальные аукционы (без truncate) + recompute
   popd >/dev/null
 else
-  echo "==> [5/7] данные — пропущены"
+  echo "==> [6/7] данные — пропущены"
 fi
 
-echo "==> [6/7] процессы pm2 (web:${WEB_PORT}, engine:${ENGINE_PORT})"
+echo "==> [7/7] процессы pm2 (web:${WEB_PORT}, engine:${ENGINE_PORT})"
 pm2 startOrReload infra/pm2/ecosystem.staging.cjs --update-env
 pm2 save
-
-echo "==> [7/7] сид контента/биллинга"
 echo -n "   ждём web на :${WEB_PORT}"
 for _ in $(seq 1 60); do
   if curl -sf "http://127.0.0.1:${WEB_PORT}/" >/dev/null 2>&1; then break; fi
   echo -n "."; sleep 2
 done; echo " ok"
-curl -sf "http://127.0.0.1:${WEB_PORT}/seed?secret=${PAYLOAD_SECRET}" >/dev/null && echo "   seed: ok" || echo "   seed: пропущен/повтори вручную"
 
 if [ $DO_NGINX = 1 ]; then
   echo "==> nginx: рендер конфига субдомена"
