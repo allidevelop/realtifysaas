@@ -33,8 +33,17 @@ bash infra/scripts/deploy-staging.sh --nginx     # отрендерит конф
 - **Безопасность стейджа:** mock-платежи; сильные `PAYLOAD_SECRET`/`SEED_ADMIN_PASSWORD`;
   `noindex` включён; опц. ограничить `/admin` по IP (закомментированный блок в
   `infra/nginx/realtify-staging.conf.template`). DOM.RIA-ключ — когда придёт апрув (в `.env`).
-- **Схема БД:** на стейдже создаётся через `PAYLOAD_DB_PUSH=true` (push при старте). На
-  настоящем проде — миграции (`payload migrate`), флаг не ставить.
+- **Схема БД:** на стейдже схема + контент создаются разовым сидом в `NODE_ENV=development`
+  ДО сборки (`next build` читает таблицы Payload). На настоящем проде — миграции
+  (`payload migrate`), а не push.
+- **Reverse-proxy:** если публичный сервер — **nginx**, используется `nginx/realtify-staging.conf.template`
+  + `certbot --nginx`. Если **Apache** (как на нашем сервере wisecat.site — он владеет 80/443
+  и проксирует проекты по `ProxyPass`), используется `apache/realtify-staging.conf.template`:
+  `a2enmod proxy proxy_http headers rewrite ssl` → vhost с `ProxyPass / http://127.0.0.1:WEB_PORT/`
+  → `a2ensite` → `certbot --apache -d DOMAIN` (сам создаёт `-le-ssl.conf` + редирект).
+- **Реальный инстанс:** `https://realtifysaas.wisecat.site` (сервер 144.91.95.134, user `developer`,
+  код в `~/realtify`, web :3100 / engine :8100 / БД docker :5435, Apache-vhost + LE SSL, mock-платежи).
+  Redeploy: `ssh developer@144.91.95.134`, `cd ~/realtify && git pull && bash infra/scripts/deploy-staging.sh --skip-data` (без `--nginx`: Apache-vhost уже стоит).
 
 ---
 

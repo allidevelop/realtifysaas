@@ -1,0 +1,17 @@
+# Apache reverse-proxy для STAGING/MVP (если публичный веб-сервер — Apache, а не nginx).
+# Шаблон: подставить ${STAGING_DOMAIN}/${WEB_PORT} (envsubst) → sites-available, затем
+# `sudo certbot --apache -d ${STAGING_DOMAIN}` сам создаст SSL-vhost (-le-ssl.conf) + редирект.
+# Нужны модули: a2enmod proxy proxy_http headers rewrite ssl.
+#
+# Именно так развёрнут реальный инстанс realtifysaas.wisecat.site (см. memory/DECISIONS).
+
+<VirtualHost *:80>
+    ServerName ${STAGING_DOMAIN}
+    ProxyPreserveHost On
+    ProxyPass / http://127.0.0.1:${WEB_PORT}/
+    ProxyPassReverse / http://127.0.0.1:${WEB_PORT}/
+    RequestHeader set X-Forwarded-Proto "http"
+    Header always set X-Robots-Tag "noindex, nofollow"
+    ErrorLog ${APACHE_LOG_DIR}/realtify-staging-error.log
+    CustomLog ${APACHE_LOG_DIR}/realtify-staging-access.log combined
+</VirtualHost>
