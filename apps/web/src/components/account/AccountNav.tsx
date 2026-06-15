@@ -16,19 +16,41 @@ export function AccountNav({ user }: { user: User | null }) {
         </Link>
 
         {user && (
-          <nav className="hidden flex-1 items-center gap-4 overflow-x-auto lg:flex">
+          <nav className="hidden flex-1 items-center gap-6 md:flex">
             <Link href="/account" className="whitespace-nowrap text-sm font-semibold text-brand-700">
               Кабінет
             </Link>
-            {MODULE_KEYS.map((key) => (
-              <Link
-                key={key}
-                href={`/account/${key}`}
-                className="whitespace-nowrap text-sm text-ink-700 hover:text-brand-700"
-              >
-                {MODULE_META[key].title}
-              </Link>
-            ))}
+
+            {/* Модули — выпадающий список (нативный details, без JS) */}
+            <details className="group relative">
+              <summary className="flex cursor-pointer list-none items-center gap-1 whitespace-nowrap text-sm font-medium text-ink-700 hover:text-brand-700 [&::-webkit-details-marker]:hidden">
+                Модулі
+                <svg
+                  className="h-4 w-4 transition-transform group-open:rotate-180"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                  aria-hidden="true"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.17l3.71-3.94a.75.75 0 1 1 1.08 1.04l-4.25 4.5a.75.75 0 0 1-1.08 0l-4.25-4.5a.75.75 0 0 1 .02-1.06Z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </summary>
+              <div className="absolute left-0 top-full z-50 mt-2 w-64 rounded-xl border border-ink-100 bg-white p-2 shadow-lg">
+                {MODULE_KEYS.map((key) => (
+                  <Link
+                    key={key}
+                    href={`/account/${key}`}
+                    className="block rounded-lg px-3 py-2 text-sm text-ink-700 hover:bg-ink-100/60 hover:text-brand-700"
+                  >
+                    {MODULE_META[key].title}
+                  </Link>
+                ))}
+              </div>
+            </details>
+
             <Link
               href="/account/billing"
               className="whitespace-nowrap text-sm font-medium text-ink-700 hover:text-brand-700"
