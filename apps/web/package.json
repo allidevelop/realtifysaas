@@ -33,6 +33,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "3.2.0",
+    "@realtify/shared-types": "workspace:*",
     "@tailwindcss/postcss": "4.3.1",
     "@tailwindcss/typography": "0.5.20",
     "@types/geojson": "7946.0.16",

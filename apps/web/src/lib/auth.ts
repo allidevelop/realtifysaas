@@ -1,4 +1,4 @@
-import { headers as nextHeaders } from 'next/headers'
+import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 
 import type { User } from '@/payload-types'
@@ -6,11 +6,16 @@ import type { User } from '@/payload-types'
 import { getPayloadClient } from './payload'
 
 // Текущий пользователь в серверных компонентах/экшенах (ТЗ §13, auth Payload).
-// Тонкая авторизация (через БД) — здесь; грубый edge-гейт — в middleware.
+// Токен читаем через cookies() и передаём как Authorization: JWT — это надёжно
+// работает и в RSC, и в server actions (в actions заголовки из headers() не
+// всегда содержат Cookie из-за форвардинга через middleware).
 export async function getCurrentUser(): Promise<User | null> {
+  const store = await cookies()
+  const token = store.get('payload-token')?.value
+  if (!token) return null
   const payload = await getPayloadClient()
-  const h = await nextHeaders()
-  const { user } = await payload.auth({ headers: h as unknown as Headers })
+  const headers = new Headers({ Authorization: `JWT ${token}` })
+  const { user } = await payload.auth({ headers })
   return (user as User | null) ?? null
 }
 

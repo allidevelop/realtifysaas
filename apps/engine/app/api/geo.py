@@ -123,6 +123,24 @@ def search(
     return {"items": items}
 
 
+@router.get("/admin-list")
+def admin_list(level: int = Query(2, ge=1, le=4)) -> dict[str, Any]:
+    """Плоский список АТЕ для селектов (id, name, parentName)."""
+    sql = """
+        SELECT a.id, a.name, p.name AS parent
+          FROM gis.admin_units a
+          LEFT JOIN gis.admin_units p ON p.id = a.parent_id
+         WHERE a.level = %(level)s
+         ORDER BY p.name NULLS FIRST, a.name
+    """
+    items: list[dict[str, Any]] = []
+    with get_conn() as conn, conn.cursor(row_factory=dict_row) as cur:
+        cur.execute(sql, {"level": level})
+        for r in cur.fetchall():
+            items.append({"id": r["id"], "name": r["name"], "parentName": r["parent"]})
+    return {"items": items}
+
+
 @router.get("/meta")
 def meta() -> dict[str, Any]:
     """Доступные периоды/сегменты/операции/метрики для панели фильтров."""

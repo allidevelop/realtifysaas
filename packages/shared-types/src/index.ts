@@ -46,3 +46,6 @@ export const SHARED_TYPES_VERSION = "0.0.0" as const;
 
 // Контракты биллинга (ТЗ §11, §12).
 export * from "./billing";
+
+// Контракты оценки (ТЗ §10, §12).
+export * from "./valuation";

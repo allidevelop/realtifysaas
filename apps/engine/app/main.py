@@ -11,6 +11,7 @@ from fastapi import FastAPI
 from app import __version__
 from app.api.geo import router as geo_router
 from app.api.reports import router as reports_router
+from app.api.valuation import router as valuation_router
 from app.schemas import HealthResponse
 
 app = FastAPI(
@@ -21,6 +22,8 @@ app = FastAPI(
 
 # Гео-API (границы/агрегаты/поиск) — этап 2 (ТЗ §9).
 app.include_router(geo_router)
+# Оценка (express/detailed) — этап 4 (ТЗ §10).
+app.include_router(valuation_router)
 # Биллинг-документы (счёт/акт PDF) — этап 5 (ТЗ §11).
 app.include_router(reports_router)
 

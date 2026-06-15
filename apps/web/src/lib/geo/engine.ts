@@ -27,3 +27,14 @@ export interface GeoMetricsResponse {
   currency: string
   values: Record<string, number>
 }
+
+export interface UnitOption {
+  id: number
+  name: string
+  parentName: string | null
+}
+
+export async function getAdminUnitOptions(level = 2): Promise<UnitOption[]> {
+  const d = await engineGeo<{ items: UnitOption[] }>('admin-list', { level })
+  return d.items
+}

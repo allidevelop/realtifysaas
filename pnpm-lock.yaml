@@ -66,6 +66,9 @@ importers:
       '@eslint/eslintrc':
         specifier: 3.2.0
         version: 3.2.0
+      '@realtify/shared-types':
+        specifier: workspace:*
+        version: link:../../packages/shared-types
       '@tailwindcss/postcss':
         specifier: 4.3.1
         version: 4.3.1
