@@ -40,3 +40,6 @@ pnpm-debug.log*
 
 # Source archive (bootstrap)
 files.zip
+
+# Образцы отчётов конкурента (анализ структуры; сами файлы не версионируем)
+reference-samples/
