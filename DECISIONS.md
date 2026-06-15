@@ -4,6 +4,10 @@
 
 ---
 
+### 2026-06-15 · Модули АРМ Аналітика и Інтерактивний звіт (все 6 модулей рабочие)
+- **Решение:** `arm-analytics` — поиск объявлений (engine `/api/listings/search` с фильтрами) + экспорт CSV (`/account/arm-analytics/export`, form-POST, BOM для Excel/кириллицы) со списанием квоты на экспорт (поиск-превью — без списания). `interactive-report` — дашборды Recharts (engine `/api/analytics/series`: тренд цены/м² по сегментам + разрез за последний период), доступ period-based (без квоты).
+- **Причина:** завершить per-module монетизацию — теперь все 6 модулей кабинета функциональны (geoportal/express-valuation/appraiser-calculator/report-generator/arm-analytics/interactive-report) на демо-данных. Реальные объявления — этап 3.
+- **deps:** recharts@3.8.1 (web). Данные — синтетические listings/агрегаты.
 ### 2026-06-15 · Этап 4 (оценка) · Сравнительная оценка на синтетических listings
 - **Решение:** движок `app/valuation/comparative.py` — подбор аналогов PostGIS (ST_Within в АТЕ + ST_DWithin 40км, площадь ±35%), веса по схожести (площадь+расстояние), средневзвешенная цена/м², корректировки (торг 0.95, этаж), confidence по числу аналогов и CV. Аналоги генерит `etl/generate_listings.py` (15552, точки ST_GeneratePoints, цены из агрегатов). **Демо-данные** — заменяются реальным потоком на этапе 3.
 - **Баг и фикс:** `random()` в нескоррелированном LATERAL кэшировался (все площади одинаковы) → перенесли в CTE-SELECT (volatile per-row).
