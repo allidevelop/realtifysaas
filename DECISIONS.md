@@ -4,6 +4,22 @@
 
 ---
 
+### 2026-06-15 · Этап 2 (геопортал) · Демо-границы (синтетика) + swappable импорт реальных данных
+- **Решение:** конвейер геопортала построен на **структурно корректном синтетическом датасете** (полигоны по bbox Украины: 27 «областей» × 4 «района» = 135 АТЕ, КАТОТТГ-подобные коды, синтетические агрегаты за 6 периодов). Скрипт `apps/engine/etl/import_boundaries.py` — **swappable**: `--source geojson --adm1 FILE [--adm2 FILE]` подставляет реальные границы (geoBoundaries/COD-AB/ukrainian_geodata, CC BY 4.0/ODbL) одной командой, parent-связь районов — пространственно (ST_Contains центроида).
+- **Причина (конфликт ТЗ §9 с реальностью):** из dev-окружения **нет внешнего сетевого доступа** (Bash-песочница блокирует egress даже без sandbox), скачать реальный GeoJSON нельзя. Синтетика даёт полностью рабочий и проверяемый геопортал сейчас; реальные данные — когда доступен файл/сеть (или их предоставит владелец). Реальный поток объявлений и метрик — этап 3 (там же заменяется синтетика агрегатов).
+- **Альтернативы:** блокировать этап до получения данных; ручная авторская разметка координат.
+
+### 2026-06-15 · Этап 2 · Схема gis (admin_units/listings/aggregated_metrics) + индексы
+- **Решение:** `infra/sql/02-gis-admin.sql` (idempotent, GiST по geom, уник по code_katottg, уник агрегатов). PostGIS в схеме gis (см. этап 0); геометрия 4326.
+- **Причина:** ТЗ §9; разделение public(Payload)/gis(PostGIS) сохранено.
+
+### 2026-06-15 · Этап 2 · Гео-API engine + прокси-роуты web с freemium
+- **Решение:** engine `app/api/geo.py` — `/api/geo/{units,metrics,search,meta}` (GeoJSON через jsonb_build_object + ST_AsGeoJSON, упрощение ST_SimplifyPreserveTopology, psycopg). Внутренний сервис; фронт ходит через **прокси-роуты кабинета** `/account/geoportal/data/*`, где применяется **freemium**: бесплатно — только последний период и без drill-down; полный доступ (вся ретроспектива + районы) — при наличии любого активного платного entitlement.
+- **Причина:** гейтинг глубины должен быть авторитетным (сервер), а не на клиенте; engine остаётся внутренним.
+
+### 2026-06-15 · Этап 2 · Карта — react-leaflet 5 (React 19) через next/dynamic(ssr:false)
+- **Решение:** `leaflet@1.9.4` + `react-leaflet@5.0.0` (+ @types/leaflet, @types/geojson); `PriceMap` — клиентский, грузится `next/dynamic({ssr:false})` (ТЗ §13 — карта только динамическим импортом). Choropleth: линейная шкала цвета по значению метрики, hover-подсветка, tooltip, клик→drill-down, легенда, fitBounds.
+- **Причина:** ТЗ §9/§13; react-leaflet 5 — первая версия с поддержкой React 19.
 ### 2026-06-15 · Этап 5 (билинг) · Модель «пакеты квот по модулям» вместо единых тарифов
 - **Решение:** монетизация — **пакеты квот/периода по каждому модулю** (как у конкурента gisuvecon), а не единый тариф Test/Basic/Pro/Corporate из ТЗ §8.2. Каждый модуль (`geoportal`/`arm-analytics`/`express-valuation`/`report-generator`/`interactive-report`/`appraiser-calculator`) продаётся отдельными пакетами (Мин/Сред/Макс) со своим счётчиком; часть — по времени (Інтерактивний звіт). Бандлы — через `grantsModules` (Калькулятор+АРМ Аналітика).
 - **Следствие модели данных:** новые коллекции `Modules`, `Entitlements` (поглощают «Subscriptions» ТЗ: period-entitlement = подписка), `Orders`, `Organizations`, `PaymentEvents`; `ServicePlans` эволюционировала в каталог пакетов (`module/grantsModules/accessType/quota/periodDays/packLevel/priceMinor`); убраны single-tier-поля (requestLimit/historyDepthMonths/exportEnabled/apiAccess/tier — необязательны/удалены).

@@ -9,6 +9,7 @@ from __future__ import annotations
 from fastapi import FastAPI
 
 from app import __version__
+from app.api.geo import router as geo_router
 from app.api.reports import router as reports_router
 from app.schemas import HealthResponse
 
@@ -18,6 +19,8 @@ app = FastAPI(
     description="Движок оценки, гео-API, публичный API, ETL, Telegram-бот.",
 )
 
+# Гео-API (границы/агрегаты/поиск) — этап 2 (ТЗ §9).
+app.include_router(geo_router)
 # Биллинг-документы (счёт/акт PDF) — этап 5 (ТЗ §11).
 app.include_router(reports_router)
 

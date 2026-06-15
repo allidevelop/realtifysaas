@@ -38,6 +38,11 @@ cd apps/engine && uv run uvicorn app.main:app --reload   # http://localhost:8000
 - Безнал PDF: engine `POST /api/reports/{invoice,act}` (fpdf2-стаб; прод — docx+LibreOffice); выдача через `/account/orders/[id]/{invoice,act}`.
 - Engine для PDF: `cd apps/engine && uv run uvicorn app.main:app --reload` (нужен для безнала).
 
+## Геопортал (этап 2)
+- Схема: `psql ... -f infra/sql/02-gis-admin.sql` (на первом старте тома — авто).
+- Импорт границ: `cd apps/engine && uv run python -m etl.import_boundaries` (синтетика-демо). Реальные данные: `... --source geojson --adm1 adm1.geojson --adm2 adm2.geojson` (geoBoundaries/COD-AB, CC BY 4.0). **Реальные границы/метрики — этап 3** (в dev нет внешней сети).
+- Гео-API (engine): `/api/geo/{units,metrics,search,meta}`. Карта: `/account/geoportal` (react-leaflet, `ssr:false`); прокси с freemium — `/account/geoportal/data/*`.
+
 ## Конвенции
 - TypeScript strict; Python типизирован (mypy). Без `any` и бездумных `# type: ignore`.
 - Коммиты — Conventional Commits: `feat|fix|chore|docs|refactor(scope): …`, атомарные.
