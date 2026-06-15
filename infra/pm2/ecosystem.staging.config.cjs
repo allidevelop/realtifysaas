@@ -1,5 +1,6 @@
 // PM2 — процессы STAGING/MVP. Порты из .env (WEB_PORT/ENGINE_PORT), по умолч. 3100/8100.
-//   pm2 start infra/pm2/ecosystem.staging.cjs && pm2 save
+//   pm2 start infra/pm2/ecosystem.staging.config.cjs && pm2 save
+// Имя с .config. — чтобы pm2 распознал ecosystem (иначе запустит файл как скрипт).
 // engine — внутренний (127.0.0.1), web зовёт его через ENGINE_BASE_URL.
 // Перед стартом: pnpm i && pnpm --filter web build; (cd apps/engine && uv sync).
 
