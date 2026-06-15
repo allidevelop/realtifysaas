@@ -35,9 +35,10 @@ module.exports = {
       name: 'realtify-staging-bot',
       cwd: './apps/engine',
       script: 'uv',
-      args: 'run python -m bot.main', // без TELEGRAM_BOT_TOKEN — graceful-выход
+      args: 'run python -m bot.main',
       interpreter: 'none',
-      autorestart: true,
+      // Без TELEGRAM_BOT_TOKEN бот graceful-выходит → НЕ перезапускаем (иначе петля).
+      autorestart: Boolean(process.env.TELEGRAM_BOT_TOKEN),
       max_memory_restart: '300M',
       out_file: './logs/bot.out.log',
       error_file: './logs/bot.err.log',

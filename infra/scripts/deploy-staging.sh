@@ -75,7 +75,9 @@ else
 fi
 
 echo "==> [7/7] процессы pm2 (web:${WEB_PORT}, engine:${ENGINE_PORT})"
-pm2 startOrReload infra/pm2/ecosystem.staging.cjs --update-env
+# Детерминированный рестарт: снять прежние и поднять заново (startOrReload капризен).
+pm2 delete realtify-staging-web realtify-staging-engine realtify-staging-bot 2>/dev/null || true
+pm2 start infra/pm2/ecosystem.staging.cjs --update-env
 pm2 save
 echo -n "   ждём web на :${WEB_PORT}"
 for _ in $(seq 1 60); do
