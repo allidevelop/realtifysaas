@@ -1,9 +1,21 @@
+import type { Where } from 'payload'
+
 import type { Entitlement, Module, User } from '@/payload-types'
 
 import { getPayloadClient } from '@/lib/payload'
 
 import type { ModuleKey } from './modules'
 import type { ModuleAccess } from './types'
+
+// Субъект доступа: пользователь и (опц.) его организация — доступ может быть личным
+// или общим по организации (seats, ТЗ §8.2/§16 этап 6).
+export type EntitlementSubject = Pick<User, 'id' | 'organization'>
+
+export function orgIdOf(user: EntitlementSubject): number | null {
+  const o = user.organization
+  if (o == null) return null
+  return typeof o === 'object' ? o.id : o
+}
 
 // Загрузка модуля по ключу (с кэшем на процесс — каталог меняется редко).
 const moduleCache = new Map<ModuleKey, Module>()
@@ -23,14 +35,21 @@ export async function getModuleByKey(key: ModuleKey): Promise<Module | null> {
   return mod
 }
 
-// Все активные не-истёкшие entitlements пользователя (module populated).
-export async function getUserEntitlements(user: Pick<User, 'id'>): Promise<Entitlement[]> {
+// Условие «личный ИЛИ организационный» доступ.
+function subjectWhere(user: EntitlementSubject): Where {
+  const oid = orgIdOf(user)
+  const ors: Where[] = [{ user: { equals: user.id } }]
+  if (oid) ors.push({ organization: { equals: oid } })
+  return { or: ors }
+}
+
+// Активные/грейс entitlements пользователя и его организации (module populated).
+export async function getUserEntitlements(user: EntitlementSubject): Promise<Entitlement[]> {
   const payload = await getPayloadClient()
   const res = await payload.find({
     collection: 'entitlements',
     where: {
-      user: { equals: user.id },
-      status: { equals: 'active' },
+      and: [subjectWhere(user), { status: { in: ['active', 'past_due'] } }],
     },
     depth: 1,
     limit: 200,
@@ -39,9 +58,9 @@ export async function getUserEntitlements(user: Pick<User, 'id'>): Promise<Entit
   return res.docs
 }
 
-// Активный entitlement пользователя для конкретного модуля и типа доступа.
+// Активный/грейс entitlement субъекта для модуля и типа доступа.
 export async function findActiveEntitlement(
-  userId: number,
+  user: EntitlementSubject,
   moduleId: number,
   accessType: 'quota' | 'period',
 ): Promise<Entitlement | null> {
@@ -49,20 +68,23 @@ export async function findActiveEntitlement(
   const res = await payload.find({
     collection: 'entitlements',
     where: {
-      user: { equals: userId },
-      module: { equals: moduleId },
-      accessType: { equals: accessType },
-      status: { equals: 'active' },
+      and: [
+        subjectWhere(user),
+        { module: { equals: moduleId } },
+        { accessType: { equals: accessType } },
+        { status: { in: ['active', 'past_due'] } },
+      ],
     },
+    sort: '-updatedAt',
     limit: 1,
     overrideAccess: true,
   })
   return res.docs[0] ?? null
 }
 
-// Резолв доступа пользователя к модулю (ТЗ §8.4 гейтинг).
+// Резолв доступа к модулю (ТЗ §8.4 гейтинг; учёт org-доступа и грейса past_due).
 export async function resolveModuleAccess(
-  user: Pick<User, 'id'> | null,
+  user: EntitlementSubject | null,
   moduleKey: ModuleKey,
 ): Promise<ModuleAccess> {
   const mod = await getModuleByKey(moduleKey)
@@ -78,21 +100,27 @@ export async function resolveModuleAccess(
     return { moduleKey, accessType, allowed: false, reason: 'no-entitlement' }
   }
 
-  const ent = await findActiveEntitlement(user.id, mod.id, accessType)
+  const ent = await findActiveEntitlement(user, mod.id, accessType)
   if (!ent) {
     return { moduleKey, accessType, allowed: false, reason: 'no-entitlement' }
   }
 
   if (accessType === 'quota') {
-    const remaining = ent.quotaRemaining ?? 0
+    const remaining = ent.status === 'active' ? (ent.quotaRemaining ?? 0) : 0
     return remaining > 0
       ? { moduleKey, accessType, allowed: true, entitlement: ent, quotaRemaining: remaining }
       : { moduleKey, accessType, allowed: false, reason: 'quota-exhausted', entitlement: ent, quotaRemaining: 0 }
   }
 
-  // period
-  const active = ent.periodEnd ? new Date(ent.periodEnd).getTime() > Date.now() : false
-  return active
+  // period: активен по periodEnd, либо past_due в пределах грейса (pastDueUntil).
+  const now = Date.now()
+  const periodOk = ent.periodEnd ? new Date(ent.periodEnd).getTime() > now : false
+  const graceOk =
+    ent.status === 'past_due' && ent.pastDueUntil
+      ? new Date(ent.pastDueUntil).getTime() > now
+      : false
+  const allowed = (ent.status === 'active' && periodOk) || graceOk
+  return allowed
     ? { moduleKey, accessType, allowed: true, entitlement: ent, periodEnd: ent.periodEnd }
     : { moduleKey, accessType, allowed: false, reason: 'period-expired', entitlement: ent, periodEnd: ent.periodEnd }
 }

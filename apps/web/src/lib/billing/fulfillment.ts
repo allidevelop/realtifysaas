@@ -1,8 +1,11 @@
-import type { Payload, PayloadRequest } from 'payload'
+import type { Payload, PayloadRequest, Where } from 'payload'
 
 import type { Entitlement, Order, ServicePlan } from '@/payload-types'
 
 import { getRedis, quotaKey } from './redis'
+
+// Субъект доступа: ровно одно из полей задано (личный или корпоративный).
+type Subject = { user?: number; organization?: number }
 
 // Идемпотентная выдача доступов по оплаченному заказу (ТЗ §11).
 // Вызывается из хука Orders.afterChange (передаёт req — ВАЖНО: хук исполняется
@@ -25,9 +28,12 @@ export async function applyPaidOrder(
   if (order.status === 'fulfilled') return // идемпотентность
   if (order.status !== 'paid') return // выдаём только по paid
 
+  // Субъект доступа: организация (корп-покупка) приоритетнее личного user.
+  const orgId = idOf(order.organization)
   const userId = idOf(order.user)
-  if (!userId) {
-    payload.logger.warn(`[fulfillment] order ${orderId} без user — пропуск`)
+  const subject: Subject = orgId ? { organization: orgId } : userId ? { user: userId } : {}
+  if (!subject.user && !subject.organization) {
+    payload.logger.warn(`[fulfillment] order ${orderId} без субъекта (user/org) — пропуск`)
     return
   }
 
@@ -37,7 +43,7 @@ export async function applyPaidOrder(
     if (!pack) continue
     const qty = item.qty ?? 1
     for (const moduleId of collectModuleIds(pack)) {
-      await grantEntitlement(payload, userId, moduleId, pack, qty, Number(order.id), req)
+      await grantEntitlement(payload, subject, moduleId, pack, qty, Number(order.id), req)
     }
   }
 
@@ -50,9 +56,16 @@ export async function applyPaidOrder(
   })
 }
 
+// Условие «личный ИЛИ организационный» доступ для subject.
+function subjectWhere(subject: Subject): Where {
+  return subject.organization
+    ? { organization: { equals: subject.organization } }
+    : { user: { equals: subject.user } }
+}
+
 async function findActiveEntitlement(
   payload: Payload,
-  userId: number,
+  subject: Subject,
   moduleId: number,
   accessType: 'quota' | 'period',
   req?: PayloadRequest,
@@ -60,11 +73,15 @@ async function findActiveEntitlement(
   const res = await payload.find({
     collection: 'entitlements',
     where: {
-      user: { equals: userId },
-      module: { equals: moduleId },
-      accessType: { equals: accessType },
-      status: { equals: 'active' },
+      and: [
+        subjectWhere(subject),
+        { module: { equals: moduleId } },
+        { accessType: { equals: accessType } },
+        // past_due тоже продлеваем (повторная покупка лечит грейс).
+        { status: { in: ['active', 'past_due'] } },
+      ],
     },
+    sort: '-updatedAt',
     limit: 1,
     overrideAccess: true,
     req,
@@ -85,7 +102,7 @@ function collectModuleIds(pack: ServicePlan): number[] {
 
 async function grantEntitlement(
   payload: Payload,
-  userId: number,
+  subject: Subject,
   moduleId: number,
   pack: ServicePlan,
   qty: number,
@@ -93,7 +110,7 @@ async function grantEntitlement(
   req?: PayloadRequest,
 ): Promise<void> {
   const accessType = pack.accessType === 'period' ? 'period' : 'quota'
-  const existing = await findActiveEntitlement(payload, userId, moduleId, accessType, req)
+  const existing = await findActiveEntitlement(payload, subject, moduleId, accessType, req)
 
   if (accessType === 'quota') {
     const add = (pack.quota ?? 0) * qty
@@ -116,7 +133,7 @@ async function grantEntitlement(
       const created = await payload.create({
         collection: 'entitlements',
         data: {
-          user: userId,
+          ...subject,
           module: moduleId,
           accessType: 'quota',
           quotaTotal: add,
@@ -132,19 +149,29 @@ async function grantEntitlement(
     return
   }
 
-  // period
+  // period — продление: новый конец = max(now, текущий конец) + periodDays.
+  // Сохраняем сумму/длительность продления для будущего авто-рекуррента.
   const addDays = (pack.periodDays ?? 0) * qty
   const base =
     existing?.periodEnd && new Date(existing.periodEnd).getTime() > Date.now()
       ? new Date(existing.periodEnd).getTime()
       : Date.now()
   const newEnd = new Date(base + addDays * 86_400_000).toISOString()
+  const renewPriceMinor = pack.priceMinor ?? null
+  const renewPeriodDays = pack.periodDays ?? null
 
   if (existing) {
     await payload.update({
       collection: 'entitlements',
       id: existing.id,
-      data: { periodEnd: newEnd, status: 'active', sourceOrders: appendOrder(existing, orderId) },
+      data: {
+        periodEnd: newEnd,
+        status: 'active',
+        pastDueUntil: null, // оплата вылечила грейс
+        renewPriceMinor,
+        renewPeriodDays,
+        sourceOrders: appendOrder(existing, orderId),
+      },
       overrideAccess: true,
       req,
     })
@@ -152,11 +179,13 @@ async function grantEntitlement(
     await payload.create({
       collection: 'entitlements',
       data: {
-        user: userId,
+        ...subject,
         module: moduleId,
         accessType: 'period',
         periodEnd: newEnd,
         status: 'active',
+        renewPriceMinor,
+        renewPeriodDays,
         sourceOrders: [orderId],
       },
       overrideAccess: true,

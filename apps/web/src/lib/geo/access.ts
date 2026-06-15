@@ -1,6 +1,4 @@
-import type { User } from '@/payload-types'
-
-import { getUserEntitlements } from '@/lib/billing/entitlements'
+import { type EntitlementSubject, getUserEntitlements } from '@/lib/billing/entitlements'
 
 import { engineGeo, type GeoMeta } from './engine'
 
@@ -13,7 +11,7 @@ export interface GeoAccess extends GeoMeta {
   full: boolean
 }
 
-export async function getGeoAccess(user: Pick<User, 'id'>): Promise<GeoAccess> {
+export async function getGeoAccess(user: EntitlementSubject): Promise<GeoAccess> {
   const [meta, entitlements] = await Promise.all([
     engineGeo<GeoMeta>('meta', {}),
     getUserEntitlements(user),

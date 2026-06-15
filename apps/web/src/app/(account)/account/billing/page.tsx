@@ -1,6 +1,6 @@
 import Link from 'next/link'
 
-import { buyPackAction } from '@/app/(account)/billing-actions'
+import { buyPackAction, setAutoRenewAction } from '@/app/(account)/billing-actions'
 import { PackBuyCard } from '@/components/account/PackBuyCard'
 import { requireUser } from '@/lib/auth'
 import { getPacksGroupedByModule } from '@/lib/billing/catalog'
@@ -20,11 +20,24 @@ const ORDER_STATUS: Record<string, string> = {
   canceled: 'Скасовано',
 }
 
-export default async function BillingPage() {
+const STATUS_LABEL: Record<string, string> = {
+  active: 'Активний',
+  past_due: 'Прострочено (грейс)',
+  exhausted: 'Вичерпано',
+  expired: 'Завершено',
+  canceled: 'Скасовано',
+}
+
+export default async function BillingPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ ok?: string; error?: string }>
+}) {
   const user = await requireUser('/account/billing')
+  const sp = await searchParams
   const payload = await getPayloadClient()
 
-  const [entitlements, groups, ordersRes] = await Promise.all([
+  const [entitlements, groups, ordersRes, ownedOrgRes] = await Promise.all([
     getUserEntitlements(user),
     getPacksGroupedByModule(),
     payload.find({
@@ -35,12 +48,33 @@ export default async function BillingPage() {
       limit: 50,
       overrideAccess: true,
     }),
+    payload.find({
+      collection: 'organizations',
+      where: { owner: { equals: user.id } },
+      limit: 1,
+      depth: 0,
+      overrideAccess: true,
+    }),
   ])
   const orders = ordersRes.docs
+  const canBuyForOrg = ownedOrgRes.docs.length > 0
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6">
       <h1 className="text-2xl font-bold text-ink-900">Білінг та пакети</h1>
+
+      {sp.ok && (
+        <p className="mt-4 rounded-lg bg-emerald-50 px-4 py-2 text-sm text-emerald-700">
+          {sp.ok === 'autorenew' ? 'Налаштування авто-продовження збережено.' : 'Готово.'}
+        </p>
+      )}
+      {sp.error && (
+        <p className="mt-4 rounded-lg bg-red-50 px-4 py-2 text-sm text-red-700">
+          {sp.error === 'forbidden'
+            ? 'Немає прав на цей доступ.'
+            : 'Сталася помилка. Спробуйте ще раз.'}
+        </p>
+      )}
 
       {/* Активные доступы */}
       <section className="mt-8">
@@ -56,6 +90,7 @@ export default async function BillingPage() {
                   <th className="px-4 py-2 font-medium">Тип</th>
                   <th className="px-4 py-2 font-medium">Залишок / до</th>
                   <th className="px-4 py-2 font-medium">Статус</th>
+                  <th className="px-4 py-2 font-medium">Авто-продовження</th>
                 </tr>
               </thead>
               <tbody>
@@ -63,6 +98,11 @@ export default async function BillingPage() {
                   <tr key={ent.id} className="border-t border-ink-100">
                     <td className="px-4 py-2">
                       {typeof ent.module === 'object' ? ent.module.name : '—'}
+                      {ent.organization && (
+                        <span className="ml-2 rounded bg-brand-50 px-1.5 py-0.5 text-xs text-brand-700">
+                          організація
+                        </span>
+                      )}
                     </td>
                     <td className="px-4 py-2">{ent.accessType === 'quota' ? 'Квота' : 'Період'}</td>
                     <td className="px-4 py-2">
@@ -70,7 +110,30 @@ export default async function BillingPage() {
                         ? `${ent.quotaRemaining ?? 0} запитів`
                         : formatDate(ent.periodEnd)}
                     </td>
-                    <td className="px-4 py-2">{ent.status}</td>
+                    <td className="px-4 py-2">{STATUS_LABEL[ent.status] ?? ent.status}</td>
+                    <td className="px-4 py-2">
+                      {ent.accessType === 'period' ? (
+                        <form action={setAutoRenewAction} className="flex items-center gap-2">
+                          <input type="hidden" name="entitlementId" value={ent.id} />
+                          <input
+                            type="hidden"
+                            name="enable"
+                            value={ent.autoRenew ? 'off' : 'on'}
+                          />
+                          <span className={ent.autoRenew ? 'text-emerald-600' : 'text-ink-400'}>
+                            {ent.autoRenew ? 'увімкнено' : 'вимкнено'}
+                          </span>
+                          <button
+                            type="submit"
+                            className="rounded border border-ink-100 px-2 py-1 text-xs text-ink-700 hover:bg-ink-100/40"
+                          >
+                            {ent.autoRenew ? 'Вимкнути' : 'Увімкнути'}
+                          </button>
+                        </form>
+                      ) : (
+                        <span className="text-ink-300">—</span>
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -135,7 +198,7 @@ export default async function BillingPage() {
             <h3 className="text-base font-semibold text-brand-700">{g.module.name}</h3>
             <div className="mt-3 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {g.packs.map((pack) => (
-                <PackBuyCard key={pack.id} pack={pack} />
+                <PackBuyCard key={pack.id} pack={pack} canBuyForOrg={canBuyForOrg} />
               ))}
             </div>
           </div>

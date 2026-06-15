@@ -12,6 +12,8 @@ export interface CheckoutInput {
   packId: number
   paymentMethod: 'card' | 'invoice'
   legalEntity?: LegalEntityInput
+  /** Если задано — доступ выдаётся организации (корп-покупка, seats). */
+  organizationId?: number
 }
 
 export interface CheckoutResult {
@@ -45,6 +47,7 @@ export async function startCheckout(input: CheckoutInput): Promise<CheckoutResul
     overrideAccess: true,
     data: {
       user: input.user.id,
+      organization: input.organizationId,
       status: input.paymentMethod === 'invoice' ? 'awaiting_invoice' : 'new',
       customerName: input.user.name ?? undefined,
       email: input.user.email,

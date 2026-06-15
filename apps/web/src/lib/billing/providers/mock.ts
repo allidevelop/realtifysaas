@@ -1,6 +1,8 @@
 import crypto from 'crypto'
 
 import type {
+  ChargeByTokenInput,
+  ChargeResult,
   CreateInvoiceInput,
   CreateInvoiceResult,
   MappedStatus,
@@ -60,6 +62,19 @@ export const mockProvider: PaymentProvider = {
         return 'canceled'
       default:
         return 'pending'
+    }
+  },
+
+  // Детерминированный рекуррент для e2e: токен с подстрокой "fail" → отказ
+  // (эмуляция declined card для проверки dunning/past_due), иначе — успех.
+  async chargeByToken(input: ChargeByTokenInput): Promise<ChargeResult> {
+    if (input.token.includes('fail')) {
+      return { ok: false, status: 'failed', error: 'card-declined' }
+    }
+    return {
+      ok: true,
+      status: 'paid',
+      providerChargeId: `mock_ch_${crypto.randomBytes(6).toString('hex')}`,
     }
   },
 }

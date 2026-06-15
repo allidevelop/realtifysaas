@@ -31,10 +31,12 @@ cd apps/engine && uv run uvicorn app.main:app --reload   # http://localhost:8000
 - Seed демо-контента: `GET /seed?secret=$PAYLOAD_SECRET` на dev-сервере (`pnpm --filter web seed` падает на Node 26 — баг tsx, см. DECISIONS).
 - Порты на хосте: Postgres-контейнер — **5433** (5432 занят локальной службой); Redis-контейнер — **6380** (6379 занят Memurai). `DATABASE_URL=...localhost:5433/geo`, `REDIS_URL=redis://localhost:6380`.
 
-## Биллинг и кабинет (этап 5)
+## Биллинг и кабинет (этапы 5–6)
 - Модель — **пакеты квот по модулям** (Modules/ServicePlans-пакеты/Entitlements/Orders/Organizations/PaymentEvents). Деньги — копейки (`priceMinor`/`totalMinor`).
-- Движок: `apps/web/src/lib/billing/*` (entitlements/quota/fulfillment/providers/checkout/documents). Гейтинг: `middleware.ts` (presence) + `requireUser` в страницах.
+- Движок: `apps/web/src/lib/billing/*` (entitlements/quota/fulfillment/providers/checkout/renewals/documents). Гейтинг: `middleware.ts` (presence) + `requireUser` в страницах.
 - Платежи: `PAYMENTS_PROVIDER=mock|monobank`. Локальный e2e — мок-провайдер + `/account/mock-pay`. Вебхуки: `/webhooks/{provider}` (подпись + идемпотентность). Боевые ключи Monobank — только на проде.
+- **Seats (корп-доступ):** entitlement может принадлежать организации (`Entitlement.organization`); член видит её через `User.organization`. Резолв доступа org-aware (`getUserEntitlements`/`resolveModuleAccess`: `or: [{user},{organization}]`). Управление — `/account/organization`; корп-покупка — чекбокс «для організації» (→ `order.organization`).
+- **Авто-рекуррент period + dunning:** `lib/billing/renewals.processRenewals` через cron-роут `GET|POST /cron/renewals?secret=$CRON_SECRET` (∥ PAYLOAD_SECRET). Продление по `chargeByToken` (mock детерминированный: токен с `fail`→отказ); отказ → `past_due`+`pastDueUntil` (грейс в гейтинге), грейс истёк → `expired`. Тоггл авто-продления — в `/account/billing`.
 - Безнал PDF: engine `POST /api/reports/{invoice,act}` (fpdf2-стаб; прод — docx+LibreOffice); выдача через `/account/orders/[id]/{invoice,act}`.
 - Engine для PDF: `cd apps/engine && uv run uvicorn app.main:app --reload` (нужен для безнала).
 

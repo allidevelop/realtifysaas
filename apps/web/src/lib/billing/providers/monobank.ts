@@ -2,6 +2,8 @@ import crypto from 'crypto'
 
 import { getRedis } from '../redis'
 import type {
+  ChargeByTokenInput,
+  ChargeResult,
   CreateInvoiceInput,
   CreateInvoiceResult,
   MappedStatus,
@@ -93,6 +95,43 @@ export const monobankProvider: PaymentProvider = {
         return 'canceled'
       default:
         return 'pending'
+    }
+  },
+
+  // Рекуррент по wallet-токену карты (ТЗ §11). Токен берётся из первой
+  // токенизированной оплаты (walletData.cardToken в вебхуке). initiationKind=merchant
+  // — списание инициирует продавец (без присутствия держателя/3DS).
+  // ВНИМАНИЕ: путь не проверялся вживую без боевого токена и сохранённой карты.
+  async chargeByToken(input: ChargeByTokenInput): Promise<ChargeResult> {
+    const body = {
+      cardToken: input.token,
+      amount: input.amountMinor,
+      ccy: CCY_NUM[input.currency] ?? 980,
+      initiationKind: 'merchant',
+      merchantPaymInfo: {
+        reference: input.reference,
+        destination: input.description ?? input.reference,
+      },
+    }
+    try {
+      const res = await fetch(`${API_BASE()}/api/merchant/wallet/payment`, {
+        method: 'POST',
+        headers: { 'X-Token': TOKEN(), 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      })
+      if (!res.ok) {
+        return { ok: false, status: 'failed', error: `HTTP ${res.status}: ${await res.text()}` }
+      }
+      const json = (await res.json()) as { invoiceId?: string; status?: string }
+      const mapped = this.mapStatus(json.status ?? '')
+      return {
+        ok: mapped === 'paid',
+        status: mapped,
+        providerChargeId: json.invoiceId,
+        error: mapped === 'paid' ? undefined : `status=${json.status}`,
+      }
+    } catch (err) {
+      return { ok: false, status: 'failed', error: String(err) }
     }
   },
 }

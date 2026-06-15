@@ -583,6 +583,23 @@ export interface Entitlement {
    * Доступ держится до конца периода, далее — canceled.
    */
   cancelAtPeriodEnd?: boolean | null;
+  autoRenew?: boolean | null;
+  /**
+   * Токен карты провайдера (для рекуррента).
+   */
+  cardToken?: string | null;
+  /**
+   * Сумма продления, копейки.
+   */
+  renewPriceMinor?: number | null;
+  /**
+   * Длительность продления, дней.
+   */
+  renewPeriodDays?: number | null;
+  /**
+   * Грейс при past_due — доступ до этой даты.
+   */
+  pastDueUntil?: string | null;
   /**
    * Заказы, продлившие этот доступ.
    */
@@ -655,6 +672,10 @@ export interface Order {
   id: number;
   orderNumber?: string | null;
   user?: (number | null) | User;
+  /**
+   * Если задано — доступ выдаётся организации (корп-покупка).
+   */
+  organization?: (number | null) | Organization;
   status: 'new' | 'awaiting_invoice' | 'pending' | 'paid' | 'failed' | 'fulfilled' | 'canceled';
   customerName?: string | null;
   email?: string | null;
@@ -1166,6 +1187,11 @@ export interface EntitlementsSelect<T extends boolean = true> {
   periodEnd?: T;
   status?: T;
   cancelAtPeriodEnd?: T;
+  autoRenew?: T;
+  cardToken?: T;
+  renewPriceMinor?: T;
+  renewPeriodDays?: T;
+  pastDueUntil?: T;
   sourceOrders?: T;
   lastConsumedAt?: T;
   updatedAt?: T;
@@ -1178,6 +1204,7 @@ export interface EntitlementsSelect<T extends boolean = true> {
 export interface OrdersSelect<T extends boolean = true> {
   orderNumber?: T;
   user?: T;
+  organization?: T;
   status?: T;
   customerName?: T;
   email?: T;

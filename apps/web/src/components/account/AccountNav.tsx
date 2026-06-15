@@ -35,6 +35,12 @@ export function AccountNav({ user }: { user: User | null }) {
             >
               Білінг
             </Link>
+            <Link
+              href="/account/organization"
+              className="whitespace-nowrap text-sm font-medium text-ink-700 hover:text-brand-700"
+            >
+              Організація
+            </Link>
           </nav>
         )}
 

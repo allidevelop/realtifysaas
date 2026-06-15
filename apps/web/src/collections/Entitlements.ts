@@ -84,6 +84,35 @@ export const Entitlements: CollectionConfig = {
       admin: { description: 'Доступ держится до конца периода, далее — canceled.' },
     },
     {
+      type: 'collapsible',
+      label: 'Рекуррент / грейс (period)',
+      fields: [
+        {
+          type: 'row',
+          fields: [
+            { name: 'autoRenew', type: 'checkbox', defaultValue: false, admin: { width: '50%' } },
+            {
+              name: 'cardToken',
+              type: 'text',
+              admin: { width: '50%', description: 'Токен карты провайдера (для рекуррента).' },
+            },
+          ],
+        },
+        {
+          type: 'row',
+          fields: [
+            { name: 'renewPriceMinor', type: 'number', admin: { width: '50%', description: 'Сумма продления, копейки.' } },
+            { name: 'renewPeriodDays', type: 'number', admin: { width: '50%', description: 'Длительность продления, дней.' } },
+          ],
+        },
+        {
+          name: 'pastDueUntil',
+          type: 'date',
+          admin: { date: { pickerAppearance: 'dayAndTime' }, description: 'Грейс при past_due — доступ до этой даты.' },
+        },
+      ],
+    },
+    {
       name: 'sourceOrders',
       type: 'relationship',
       relationTo: 'orders',

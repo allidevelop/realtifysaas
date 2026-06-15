@@ -4,7 +4,8 @@ import { formatPrice } from '@/lib/format'
 import type { ServicePlan } from '@/payload-types'
 
 // Карточка пакета с кнопкой покупки (форма → buyPackAction → провайдер оплаты).
-export function PackBuyCard({ pack }: { pack: ServicePlan }) {
+// canBuyForOrg — показывать переключатель «купить на организацию» (для владельца org).
+export function PackBuyCard({ pack, canBuyForOrg = false }: { pack: ServicePlan; canBuyForOrg?: boolean }) {
   const accessInfo =
     pack.accessType === 'period'
       ? `${pack.periodDays ?? 0} днів доступу`
@@ -38,6 +39,12 @@ export function PackBuyCard({ pack }: { pack: ServicePlan }) {
       <form action={buyPackAction} className="mt-6">
         <input type="hidden" name="packId" value={pack.id} />
         <input type="hidden" name="paymentMethod" value="card" />
+        {canBuyForOrg && (
+          <label className="mb-3 flex items-center gap-2 text-sm text-ink-700">
+            <input type="checkbox" name="forOrg" className="h-4 w-4 rounded border-ink-300" />
+            Купити для організації (спільний доступ)
+          </label>
+        )}
         <button
           type="submit"
           className="w-full rounded-lg bg-brand-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-brand-700"

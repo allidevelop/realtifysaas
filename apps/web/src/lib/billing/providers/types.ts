@@ -28,10 +28,28 @@ export interface WebhookParsed {
   reference?: string
 }
 
+// Рекуррентное списание по сохранённому токену карты (wallet) — ТЗ §11 (авто-продление).
+export interface ChargeByTokenInput {
+  token: string
+  amountMinor: number
+  currency: string
+  reference: string
+  description?: string
+}
+
+export interface ChargeResult {
+  ok: boolean
+  status: MappedStatus
+  providerChargeId?: string
+  error?: string
+}
+
 export interface PaymentProvider {
   name: ProviderName
   createInvoice(input: CreateInvoiceInput): Promise<CreateInvoiceResult>
   verifyWebhook(args: { rawBody: string; headers: Headers }): Promise<boolean>
   parseWebhook(rawBody: string): WebhookParsed
   mapStatus(providerStatus: string): MappedStatus
+  // Опционально: списание по токену (рекуррент). Не все провайдеры/режимы поддерживают.
+  chargeByToken?(input: ChargeByTokenInput): Promise<ChargeResult>
 }

@@ -1,8 +1,6 @@
-import type { User } from '@/payload-types'
-
 import { getPayloadClient } from '@/lib/payload'
 
-import { resolveModuleAccess } from './entitlements'
+import { type EntitlementSubject, resolveModuleAccess } from './entitlements'
 import type { ModuleKey } from './modules'
 import { getRedis, quotaKey } from './redis'
 import type { ConsumeResult } from './types'
@@ -26,7 +24,7 @@ interface ConsumeOptions {
 
 // Атомарно списать n единиц квоты модуля у пользователя (ТЗ §8.4, §10.2).
 export async function consumeQuota(
-  user: Pick<User, 'id'>,
+  user: EntitlementSubject,
   moduleKey: ModuleKey,
   opts: ConsumeOptions = {},
 ): Promise<ConsumeResult> {

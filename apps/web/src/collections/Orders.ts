@@ -52,6 +52,13 @@ export const Orders: CollectionConfig = {
     },
     { name: 'user', type: 'relationship', relationTo: 'users', index: true },
     {
+      name: 'organization',
+      type: 'relationship',
+      relationTo: 'organizations',
+      index: true,
+      admin: { description: 'Если задано — доступ выдаётся организации (корп-покупка).' },
+    },
+    {
       name: 'status',
       type: 'select',
       required: true,
