@@ -1,9 +1,11 @@
 'use client'
 
-import { useActionState, useMemo } from 'react'
+import { useActionState } from 'react'
 
 import { runValuation, type ValuationState } from '@/app/(account)/account/valuation-actions'
 import { formatPrice } from '@/lib/format'
+
+import { UnitCombobox } from './UnitCombobox'
 
 export interface UnitOption {
   id: number
@@ -27,16 +29,6 @@ export function ValuationModule({ moduleKey, mode, units, quotaRemaining }: Prop
   // Свежий runId на каждый рендер (идемпотентность двойного сабмита до завершения).
   const runId = uuid()
 
-  const grouped = useMemo(() => {
-    const m = new Map<string, UnitOption[]>()
-    for (const u of units) {
-      const key = u.parentName ?? '—'
-      if (!m.has(key)) m.set(key, [])
-      m.get(key)!.push(u)
-    }
-    return [...m.entries()]
-  }, [units])
-
   const r = state.result
   const ok = r && r.comparablesCount > 0
 
@@ -49,15 +41,7 @@ export function ValuationModule({ moduleKey, mode, units, quotaRemaining }: Prop
         <input type="hidden" name="runId" value={runId} />
 
         <Field label="Територіальна одиниця (район)">
-          <select name="adminUnitId" required className="geo-select">
-            {grouped.map(([parent, list]) => (
-              <optgroup key={parent} label={parent}>
-                {list.map((u) => (
-                  <option key={u.id} value={u.id}>{u.name}</option>
-                ))}
-              </optgroup>
-            ))}
-          </select>
+          <UnitCombobox units={units} name="adminUnitId" />
         </Field>
         <div className="grid grid-cols-2 gap-3">
           <Field label="Сегмент">
