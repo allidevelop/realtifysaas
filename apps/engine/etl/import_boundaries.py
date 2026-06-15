@@ -148,17 +148,19 @@ def insert_features(
     with conn.cursor() as cur:
         for f in features:
             geometry = f.get("geometry")
-            if not geometry:
-                continue
+            if not geometry or "Polygon" not in str(geometry.get("type")):
+                continue  # только полигоны (LineString-артефакты osmtogeojson пропускаем)
             code, name, population = _parse_props(f.get("properties", {}) or {})
+            # ON CONFLICT — устойчивость к дублям КАТОТТГ (артефакты конвертации границ).
             cur.execute(
                 """
                 INSERT INTO gis.admin_units (code_katottg, level, name, population, geom)
                 VALUES (%s, %s, %s, %s, ST_Multi(ST_SetSRID(ST_GeomFromGeoJSON(%s), 4326)))
+                ON CONFLICT (code_katottg) WHERE code_katottg IS NOT NULL DO NOTHING
                 """,
                 (code, level, name, population, json.dumps(geometry)),
             )
-            count += 1
+            count += cur.rowcount
     return count
 
 
