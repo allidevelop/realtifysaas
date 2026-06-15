@@ -64,9 +64,16 @@ else
 fi
 
 if [ $SKIP_DATA = 0 ]; then
-  echo "==> [6/7] данные: реальные границы + демо-listings + Prozorro"
+  echo "==> [6/7] данные: границы + демо-listings + Prozorro"
   pushd apps/engine >/dev/null
-  uv run python -m etl.import_boundaries --source geoboundaries --demo-metrics
+  # Границы: если заданы BOUNDARY_ADM1/ADM2 (укр. OSM-датасет, name:uk) — берём их;
+  # иначе — geoBoundaries (латиница). См. ~/boundaries на сервере / DECISIONS.
+  if [ -n "${BOUNDARY_ADM1:-}" ] && [ -f "${BOUNDARY_ADM1}" ]; then
+    uv run python -m etl.import_boundaries --source geojson \
+      --adm1 "$BOUNDARY_ADM1" --adm2 "$BOUNDARY_ADM2" --demo-metrics
+  else
+    uv run python -m etl.import_boundaries --source geoboundaries --demo-metrics
+  fi
   uv run python -m etl.generate_listings           # демо-listings из агрегатов
   uv run python -m etl.pipeline --source prozorro  # реальные аукционы (без truncate) + recompute
   popd >/dev/null
