@@ -43,6 +43,12 @@ cd apps/engine && uv run uvicorn app.main:app --reload   # http://localhost:8000
 - Импорт границ: `cd apps/engine && uv run python -m etl.import_boundaries` (синтетика-демо). Реальные данные: `... --source geojson --adm1 adm1.geojson --adm2 adm2.geojson` (geoBoundaries/COD-AB, CC BY 4.0). **Реальные границы/метрики — этап 3** (в dev нет внешней сети).
 - Гео-API (engine): `/api/geo/{units,metrics,search,meta}`. Карта: `/account/geoportal` (react-leaflet, `ssr:false`); прокси с freemium — `/account/geoportal/data/*`.
 
+## Оценка и бот (этап 4)
+- Демо-объявления: `cd apps/engine && uv run python -m etl.generate_listings` (нужны после import_boundaries). Реальные — этап 3.
+- Движок оценки (engine): `/api/valuation/{express,detailed}`, отчёт PDF `/api/reports/valuation-doc`. Модули кабинета: `/account/{express-valuation,appraiser-calculator,report-generator}`.
+- Telegram-бот (отдельный процесс): `cd apps/engine && uv run python -m bot.main` (нужен `TELEGRAM_BOT_TOKEN`; без него — graceful-выход).
+- Server actions нельзя драйвить из curl (Flight+Origin) — интерактивные формы проверять в браузере.
+
 ## Конвенции
 - TypeScript strict; Python типизирован (mypy). Без `any` и бездумных `# type: ignore`.
 - Коммиты — Conventional Commits: `feat|fix|chore|docs|refactor(scope): …`, атомарные.

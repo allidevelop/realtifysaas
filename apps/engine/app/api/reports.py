@@ -13,6 +13,8 @@ from fpdf import FPDF
 from fpdf.enums import XPos, YPos
 
 from app.schemas.billing import ActDocRequest, InvoiceDocRequest
+from app.schemas.valuation import ValuationRequest
+from app.valuation.comparative import value_property
 
 router = APIRouter(prefix="/api/reports", tags=["reports"])
 
@@ -110,3 +112,40 @@ def make_invoice(req: InvoiceDocRequest) -> Response:
 def make_act(req: ActDocRequest) -> Response:
     pdf = _render(req, title="АКТ наданих послуг", is_act=True, paid_date=req.paid_date)
     return Response(content=pdf, media_type="application/pdf")
+
+
+@router.post("/valuation-doc")
+def valuation_doc(req: ValuationRequest) -> Response:
+    """Отчёт оценки (PDF) по детальной оценке (ТЗ §10.2)."""
+    d = value_property(req)
+    doc = _Doc()
+    doc.line("ЗВІТ З ОЦІНКИ (експрес)", size=15)
+    doc.gap()
+    doc.line(f"Об'єкт: {req.segment}, операція: {req.operation}, площа: {req.area} м²")
+    if d.admin_unit_name:
+        doc.line(f"Локація: {d.admin_unit_name}")
+    doc.gap()
+    if d.comparables_count == 0:
+        doc.line("Недостатньо аналогів для оцінки.")
+        return Response(content=doc.output(), media_type="application/pdf")
+
+    doc.line(f"Орієнтовна вартість: {d.value:,.0f} {d.currency}".replace(",", " "), size=13)
+    doc.line(f"Ціна за м²: {d.price_per_sqm:,.0f} {d.currency}".replace(",", " "))
+    doc.line(f"Довіра: {int(d.confidence * 100)}% · аналогів: {d.comparables_count}")
+    doc.gap()
+
+    if d.adjustments:
+        doc.line("Корективи:")
+        for a in d.adjustments:
+            doc.line(f"  • {a.description}: ×{a.coefficient}")
+        doc.gap()
+
+    doc.line("Аналоги (топ за схожістю):")
+    for c in d.comparables[:8]:
+        doc.line(
+            f"  • {c.area:.0f} м² — {c.price:,.0f} {d.currency} "
+            f"({c.price_per_sqm:,.0f}/м², вага {c.weight})".replace(",", " ")
+        )
+    doc.gap()
+    doc.line(d.methodology)
+    return Response(content=doc.output(), media_type="application/pdf")
