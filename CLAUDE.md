@@ -52,10 +52,10 @@ cd apps/engine && uv run uvicorn app.main:app --reload   # http://localhost:8000
 - Server actions нельзя драйвить из curl (Flight+Origin) — интерактивные формы проверять в браузере.
 
 ## Данные / ETL (этап 3)
-- Конвейер: `cd apps/engine && uv run python -m etl.pipeline --source sample` (локально) | `--source olx` (реальный, нужны `OLX_CLIENT_ID/SECRET` + сеть) | `--truncate` (очистка listings).
-- Шаги: `etl/sources/{olx,sample}` → `etl/transform` (дедуп/валюты) → `etl/load` (upsert, ST_Contains) → `etl/aggregate` (пересчёт агрегатов из listings, IQR/median/roll-up).
-- Триггер: `POST /api/etl/run?source=sample&secret=$ETL_TRIGGER_SECRET`.
-- Реальный OLX: заполнить `OLX_*` в .env, уточнить `OLX_CATEGORY_MAP` (id категорий) и `OLX_AREA_ATTR`.
+- Конвейер: `cd apps/engine && uv run python -m etl.pipeline --source sample` (локально) | `--source prozorro` (реальный, БЕЗ ключа) | `--source domria` (реальный, нужен `DOMRIA_API_KEY`) | `--source olx` | `--truncate` (очистка listings).
+- Шаги: `etl/sources/{olx,sample,prozorro,domria}` → `etl/transform` (дедуп/валюты, отсев без area/price/coords) → `etl/load` (upsert, ST_Contains) → `etl/aggregate` (пересчёт агрегатов из listings, IQR/median/roll-up).
+- Триггер: `POST /api/etl/run?source=sample&secret=$ETL_TRIGGER_SECRET` (источники в `etl.pipeline.SOURCES`).
+- **Источники данных (ТЗ §3):** OLX Partner API — НЕ источник рынка (управление СВОИМИ ад'ами, см. DECISIONS), держим как канал постинга. **DOM.RIA** (`developers.ria.com`, ключ `DOMRIA_API_KEY`, лимит 1000/мес·30/час, обязателен индексируемый бэклинк на dom.ria.com) — основной поток объявлений. **Prozorro.Продажі** (`procedure.prozorro.sale/api`, без ключа) — «якорь» цен реальных сделок (аукционы; больше аренда/арестованное → не жилой поток). Реальный OLX: `OLX_*` + уточнить `OLX_CATEGORY_MAP`/`OLX_AREA_ATTR`.
 
 ## Конвенции
 - TypeScript strict; Python типизирован (mypy). Без `any` и бездумных `# type: ignore`.

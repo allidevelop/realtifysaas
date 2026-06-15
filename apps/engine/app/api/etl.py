@@ -7,7 +7,7 @@ from typing import Any
 
 from fastapi import APIRouter, HTTPException, Query
 
-from etl.pipeline import run
+from etl.pipeline import SOURCES, run
 
 router = APIRouter(prefix="/api/etl", tags=["etl"])
 
@@ -22,6 +22,6 @@ def run_etl(
     expected = os.getenv("ETL_TRIGGER_SECRET", "")
     if not expected or secret != expected:
         raise HTTPException(status_code=401, detail="unauthorized")
-    if source not in ("olx", "sample"):
+    if source not in SOURCES:
         raise HTTPException(status_code=400, detail="bad source")
     return run(source, truncate)

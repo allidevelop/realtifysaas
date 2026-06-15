@@ -16,14 +16,22 @@ from app.db import get_conn
 from .aggregate import recompute
 from .load import load_listings
 from .sources.base import Source
+from .sources.domria import DomRiaSource
 from .sources.olx import OlxSource
+from .sources.prozorro import ProzorroSaleSource
 from .sources.sample import SampleSource
 from .transform import normalize
+
+SOURCES = ("olx", "sample", "prozorro", "domria")
 
 
 def _make_source(name: str) -> Source:
     if name == "olx":
         return OlxSource()
+    if name == "prozorro":
+        return ProzorroSaleSource()
+    if name == "domria":
+        return DomRiaSource()
     return SampleSource()
 
 
@@ -53,7 +61,7 @@ def run(source_name: str, truncate: bool = False) -> dict[str, int]:
 
 def main() -> None:
     ap = argparse.ArgumentParser(description="ETL объявлений → агрегаты")
-    ap.add_argument("--source", choices=["olx", "sample"], default="sample")
+    ap.add_argument("--source", choices=list(SOURCES), default="sample")
     ap.add_argument("--truncate", action="store_true", help="очистить listings перед загрузкой")
     args = ap.parse_args()
     r = run(args.source, args.truncate)
