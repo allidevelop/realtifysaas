@@ -28,30 +28,31 @@ export async function runSeed(payload: Payload): Promise<{ ok: true }> {
 
   // ── modules + packs (пакеты квот по модулям, как у конкурента) ──
   {
+    // Инкрементально: добавляем недостающие модули (новый модуль появится и на живой БД).
     const moduleId = {} as Record<ModuleKey, number>
     const existingModules = await payload.find({ collection: 'modules', limit: 100 })
-    if (existingModules.totalDocs === 0) {
-      for (const key of MODULE_KEYS) {
-        const m = MODULE_META[key]
-        const created = await payload.create({
-          collection: 'modules',
-          data: {
-            name: m.title,
-            key: m.key,
-            slug: m.key,
-            summary: m.summary,
-            icon: m.icon,
-            accessType: m.accessType,
-            order: m.order,
-            isActive: true,
-          },
-        })
-        moduleId[key] = created.id
-      }
-      log(`создано модулей: ${MODULE_KEYS.length}`)
-    } else {
-      for (const m of existingModules.docs) moduleId[m.key as ModuleKey] = m.id
+    for (const m of existingModules.docs) moduleId[m.key as ModuleKey] = m.id
+    let createdModules = 0
+    for (const key of MODULE_KEYS) {
+      if (moduleId[key]) continue
+      const m = MODULE_META[key]
+      const created = await payload.create({
+        collection: 'modules',
+        data: {
+          name: m.title,
+          key: m.key,
+          slug: m.key,
+          summary: m.summary,
+          icon: m.icon,
+          accessType: m.accessType,
+          order: m.order,
+          isActive: true,
+        },
+      })
+      moduleId[key] = created.id
+      createdModules++
     }
+    if (createdModules) log(`создано модулей: ${createdModules}`)
 
     const existingPacks = await payload.find({ collection: 'service-plans', limit: 1 })
     if (existingPacks.totalDocs === 0) {
@@ -161,6 +162,46 @@ export async function runSeed(payload: Payload): Promise<{ ok: true }> {
       log(`создано пакетов: ${count}`)
     } else {
       log('пакеты уже есть — пропускаю')
+    }
+
+    // Инкрементально: пакеты «Портфельна оцінка» (на референсе свой тариф не опубликован).
+    if (moduleId['portfolio-valuation']) {
+      const have = await payload.find({
+        collection: 'service-plans',
+        where: { module: { equals: moduleId['portfolio-valuation'] } },
+        limit: 1,
+      })
+      if (have.totalDocs === 0) {
+        const lvl = ['min', 'mid', 'max'] as const
+        const portfolio: Array<[number, number]> = [[10, 1500], [25, 3000], [50, 5000]]
+        for (let i = 0; i < portfolio.length; i++) {
+          const [q, g] = portfolio[i]
+          await payload.create({
+            collection: 'service-plans',
+            data: {
+              name: `Портфельна оцінка — ${q}`,
+              module: moduleId['portfolio-valuation'],
+              accessType: 'quota',
+              packLevel: lvl[i],
+              quota: q,
+              price: g,
+              priceMinor: g * 100,
+              currency: 'UAH',
+              billingPeriod: 'one-time',
+              highlighted: i === 1,
+              tagline: `${q} портфелів`,
+              order: 100 + i,
+              isActive: true,
+              features: [
+                { label: `${q} пакетних оцінок` },
+                { label: 'Масив об’єктів однією вибіркою' },
+                { label: 'Ретроспектива з 2018' },
+              ],
+            },
+          })
+        }
+        log('создано пакетов портфельной оценки: 3')
+      }
     }
   }
 

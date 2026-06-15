@@ -53,3 +53,38 @@ class DetailedResult(ExpressResult):
     comparables: list[Comparable] = []
     adjustments: list[Adjustment] = []
     methodology: str = ""
+
+
+# Портфельна оцінка — пакетная оценка массива объектов (ТЗ §10.1; аналог референса).
+class BatchItem(BaseModel):
+    label: str = ""
+    admin_unit_id: int | None = Field(None, alias="adminUnitId")
+    lat: float | None = None
+    lon: float | None = None
+    segment: str = "apartment"
+    operation: str = "sale"
+    area: float = Field(..., gt=0)
+
+    model_config = {"populate_by_name": True}
+
+
+class BatchRequest(BaseModel):
+    items: list[BatchItem]
+
+
+class BatchResultItem(BaseModel):
+    label: str = ""
+    value: float
+    price_per_sqm: float = Field(alias="pricePerSqm")
+    confidence: float
+    comparables_count: int = Field(alias="comparablesCount")
+    admin_unit_name: str | None = Field(None, alias="adminUnitName")
+
+    model_config = {"populate_by_name": True}
+
+
+class BatchResult(BaseModel):
+    items: list[BatchResultItem]
+    total: float
+    count: int
+    valued: int
