@@ -42,7 +42,8 @@ cd apps/engine && uv run uvicorn app.main:app --reload   # http://localhost:8000
 
 ## Геопортал (этап 2)
 - Схема: `psql ... -f infra/sql/02-gis-admin.sql` (на первом старте тома — авто).
-- Импорт границ: `cd apps/engine && uv run python -m etl.import_boundaries` (синтетика-демо). Реальные данные: `... --source geojson --adm1 adm1.geojson --adm2 adm2.geojson` (geoBoundaries/COD-AB, CC BY 4.0). **Реальные границы/метрики — этап 3** (в dev нет внешней сети).
+- Импорт границ: `uv run python -m etl.import_boundaries` (синтетика-демо). **Реальные границы Украины одной командой:** `... --source geoboundaries` (скачивает ADM1+ADM2 из geoBoundaries, ODbL; нужна сеть). Либо локальный КАТОТТГ-файл: `... --source geojson --adm1 adm1.geojson --adm2 adm2.geojson` (укр. названия + коды). Для real-границ агрегаты НЕ фабрикуются — их даёт ETL (`recompute`); демо-карта до ETL — флаг `--demo-metrics`.
+- Привязка объявлений к АТЕ — **по координатам** (`load.py` ST_Contains, level 2): источник-агностично (OLX/DOM.RIA/Prozorro одинаково), per-source гео-словари не нужны.
 - Гео-API (engine): `/api/geo/{units,metrics,search,meta}`. Карта: `/account/geoportal` (react-leaflet, `ssr:false`); прокси с freemium — `/account/geoportal/data/*`.
 
 ## Оценка и бот (этап 4)
