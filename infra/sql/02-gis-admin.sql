@@ -24,16 +24,21 @@ CREATE UNIQUE INDEX IF NOT EXISTS admin_units_katottg_uq
 -- Объявления (наполняются ETL на этапе 3; точка на карте + привязка к АТЕ).
 CREATE TABLE IF NOT EXISTS gis.listings (
   id            bigserial PRIMARY KEY,
+  external_id   text,                         -- id в источнике (для дедупа/накопления)
   segment       text NOT NULL,               -- apartment/house/commercial/land
   operation     text NOT NULL,               -- sale/rent
   area          numeric,
   price         numeric,
   currency      text NOT NULL DEFAULT 'UAH',
   published_at  date,
-  source        text,
+  source        text,                         -- olx/sample/synthetic/...
+  url           text,
   geom          geometry(Point, 4326),
   admin_unit_id integer REFERENCES gis.admin_units(id) ON DELETE SET NULL
 );
+-- Дедуп/upsert по (источник, внешний id).
+CREATE UNIQUE INDEX IF NOT EXISTS listings_source_extid_uq
+  ON gis.listings (source, external_id) WHERE external_id IS NOT NULL;
 CREATE INDEX IF NOT EXISTS listings_geom_gix ON gis.listings USING GIST (geom);
 CREATE INDEX IF NOT EXISTS listings_admin_idx ON gis.listings (admin_unit_id);
 CREATE INDEX IF NOT EXISTS listings_period_idx ON gis.listings (published_at);

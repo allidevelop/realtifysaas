@@ -10,6 +10,7 @@ from fastapi import FastAPI
 
 from app import __version__
 from app.api.analytics import router as analytics_router
+from app.api.etl import router as etl_router
 from app.api.geo import router as geo_router
 from app.api.listings import router as listings_router
 from app.api.reports import router as reports_router
@@ -29,6 +30,8 @@ app.include_router(valuation_router)
 # Объявления и аналитика (АРМ Аналітика, интерактивный отчёт) — ТЗ §8.1.
 app.include_router(listings_router)
 app.include_router(analytics_router)
+# Триггер ETL (этап 3, ТЗ §10.3).
+app.include_router(etl_router)
 # Биллинг-документы (счёт/акт PDF) — этап 5 (ТЗ §11).
 app.include_router(reports_router)
 

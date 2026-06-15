@@ -49,6 +49,12 @@ cd apps/engine && uv run uvicorn app.main:app --reload   # http://localhost:8000
 - Telegram-бот (отдельный процесс): `cd apps/engine && uv run python -m bot.main` (нужен `TELEGRAM_BOT_TOKEN`; без него — graceful-выход).
 - Server actions нельзя драйвить из curl (Flight+Origin) — интерактивные формы проверять в браузере.
 
+## Данные / ETL (этап 3)
+- Конвейер: `cd apps/engine && uv run python -m etl.pipeline --source sample` (локально) | `--source olx` (реальный, нужны `OLX_CLIENT_ID/SECRET` + сеть) | `--truncate` (очистка listings).
+- Шаги: `etl/sources/{olx,sample}` → `etl/transform` (дедуп/валюты) → `etl/load` (upsert, ST_Contains) → `etl/aggregate` (пересчёт агрегатов из listings, IQR/median/roll-up).
+- Триггер: `POST /api/etl/run?source=sample&secret=$ETL_TRIGGER_SECRET`.
+- Реальный OLX: заполнить `OLX_*` в .env, уточнить `OLX_CATEGORY_MAP` (id категорий) и `OLX_AREA_ATTR`.
+
 ## Конвенции
 - TypeScript strict; Python типизирован (mypy). Без `any` и бездумных `# type: ignore`.
 - Коммиты — Conventional Commits: `feat|fix|chore|docs|refactor(scope): …`, атомарные.

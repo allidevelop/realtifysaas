@@ -2,7 +2,12 @@
 
 from __future__ import annotations
 
+from dotenv import load_dotenv
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# Кладём .env в os.environ — для os.getenv в ETL/OLX (pydantic-settings этого не делает).
+load_dotenv("../../.env")
+load_dotenv(".env")
 
 
 class Settings(BaseSettings):
