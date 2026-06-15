@@ -94,8 +94,13 @@
 - [ ] Корпоративные аккаунты с местами (seats) — Organizations есть, seat-логика не реализована
 **Статус:** все 6 платных модулей кабинета функциональны на демо-данных. Осталось: seats (корп-доступ).
 
-## Этап 7 — Вывод в прод ⚪ ожидает
-VPS, Nginx, SSL, PM2, pm2-logrotate, бэкапы, мониторинг, перф карты, мобильный QA, боевые платёжные ключи.
+## Этап 7 — Вывод в прод 🟡 конфиги готовы (деплой — у владельца)
+- [x] `infra/nginx/realtify.conf` (reverse proxy, SSL/Certbot, websockets, security-headers, кэш статики)
+- [x] `infra/pm2/ecosystem.config.cjs` (web/engine/bot; logrotate; reload без даунтайма)
+- [x] `infra/scripts/{backup-db,restore-db,healthcheck}.sh` (бэкап обеих схем, ротация, мониторинг)
+- [x] `infra/README.md` (полный гайд деплоя) + `.env.prod.example`
+- [ ] Сам деплой на VPS, домен/SSL, боевые ключи (Monobank/OLX/Telegram), перф карты, мобильный QA
+**Статус:** инфра-конфиги готовы и провалидированы (pm2 load, sh -n, nginx braces). Деплой/ключи — шаг владельца.
 **DoD:** стабильный прод; бэкапы и мониторинг работают; платежи в боевом режиме.
 
 ---
