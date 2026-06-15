@@ -4,6 +4,40 @@
 > Ниже — конфиги и шаги. Боевые ключи (Monobank/OLX/Telegram) — только в prod-`.env`,
 > не в репозитории.
 
+## 0. Быстрый старт: Staging / MVP на субдомене (mock-платежи)
+
+> Для тестирования всего продукта в браузере на публичном субдомене. Платежи — **mock**
+> (без реальных денег). Отличия от боевого прода — в разделах ниже (Monobank, миграции, бэкапы).
+
+**Пререквизиты на сервере (Ubuntu):** docker + compose, Node 20+ и `pnpm`, `uv`, `pm2`,
+`nginx`, `certbot`, `gettext-base` (даёт `envsubst`).
+
+```bash
+# 1) DNS: A-запись  app.realtifysaas.wisecat.site → <IP сервера>
+# 2) код + конфиг
+git clone <repo> /opt/realtify && cd /opt/realtify
+cp .env.staging.example .env
+#    заполнить <...>: секреты — `openssl rand -hex 32` (PAYLOAD_SECRET) / `-hex 16` (прочие),
+#    СИЛЬНЫЙ SEED_ADMIN_PASSWORD (сайт публичный!), STAGING_DOMAIN, пароль БД.
+# 3) деплой одной командой (docker → данные → сборка → pm2 → seed)
+bash infra/scripts/deploy-staging.sh --pull
+# 4) nginx + SSL
+bash infra/scripts/deploy-staging.sh --nginx     # отрендерит конфиг и напечатает sudo-команды
+#    выполнить напечатанные:  cp → ln → certbot --nginx -d app.realtifysaas.wisecat.site → reload
+```
+Открыть `https://app.realtifysaas.wisecat.site` (сайт) и `/admin` (вход — `SEED_ADMIN_*`).
+
+- **Данные:** реальные границы Украины (geoBoundaries) + демо-listings + реальные аукционы Prozorro.
+- **Быстрый redeploy** (после `git pull`, без переналива данных): `bash infra/scripts/deploy-staging.sh --pull --skip-data`.
+- **Порты:** web `:3100`, engine `:8100` (внутренний). Меняются в `.env` (`WEB_PORT`/`ENGINE_PORT`).
+- **Безопасность стейджа:** mock-платежи; сильные `PAYLOAD_SECRET`/`SEED_ADMIN_PASSWORD`;
+  `noindex` включён; опц. ограничить `/admin` по IP (закомментированный блок в
+  `infra/nginx/realtify-staging.conf.template`). DOM.RIA-ключ — когда придёт апрув (в `.env`).
+- **Схема БД:** на стейдже создаётся через `PAYLOAD_DB_PUSH=true` (push при старте). На
+  настоящем проде — миграции (`payload migrate`), флаг не ставить.
+
+---
+
 ## 1. Сервер (Ubuntu VPS)
 ```bash
 sudo apt update && sudo apt install -y nginx postgresql-16 postgresql-16-postgis-3 redis-server git curl

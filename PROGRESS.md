@@ -100,6 +100,7 @@
 - [x] `infra/pm2/ecosystem.config.cjs` (web/engine/bot; logrotate; reload без даунтайма)
 - [x] `infra/scripts/{backup-db,restore-db,healthcheck}.sh` (бэкап обеих схем, ротация, мониторинг)
 - [x] `infra/README.md` (полный гайд деплоя) + `.env.prod.example`
+- [x] **Staging/MVP одной командой** (субдомен + SSL, mock-платежи): `deploy-staging.sh` (docker→реальные границы+демо+Prozorro→build→pm2→seed), `nginx/realtify-staging.conf.template`, `pm2/ecosystem.staging.cjs`, `.env.staging.example`, `PAYLOAD_DB_PUSH` (схема без миграций)
 - [ ] Сам деплой на VPS, домен/SSL, боевые ключи (Monobank/OLX/Telegram), перф карты, мобильный QA
 **Статус:** инфра-конфиги готовы и провалидированы (pm2 load, sh -n, nginx braces). Деплой/ключи — шаг владельца.
 **DoD:** стабильный прод; бэкапы и мониторинг работают; платежи в боевом режиме.

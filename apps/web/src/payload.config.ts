@@ -74,6 +74,10 @@ export default buildConfig({
     pool: {
       connectionString: process.env.DATABASE_URL || '',
     },
+    // По умолчанию Payload пушит схему в dev и требует миграций в prod. Для стейджа/
+    // MVP без миграций — форсируем push через PAYLOAD_DB_PUSH=true (см. infra/README).
+    // На настоящем проде — перейти на миграции (payload migrate) и НЕ ставить этот флаг.
+    ...(process.env.PAYLOAD_DB_PUSH === 'true' ? { push: true } : {}),
   }),
   plugins: [
     seoPlugin({
