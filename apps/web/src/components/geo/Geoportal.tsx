@@ -176,7 +176,7 @@ export function Geoportal({ access }: { access: GeoAccess }) {
 
       {/* Карта */}
       <div className="h-[70vh] w-full overflow-hidden rounded-2xl border border-ink-100 bg-white">
-        {geojson ? (
+        {geojson && geojson.features.length > 0 ? (
           <PriceMap
             geojson={geojson}
             values={values}
@@ -184,6 +184,25 @@ export function Geoportal({ access }: { access: GeoAccess }) {
             onSelect={onSelect}
             dataKey={dataKey}
           />
+        ) : geojson && !loading && geojson.features.length === 0 ? (
+          // Напр., Київ/Севастополь/АР Крим — немає підпорядкованих районів у датасеті.
+          <div className="grid h-full place-items-center px-6 text-center text-ink-500">
+            <div>
+              <p className="font-medium text-ink-700">
+                {level === 2
+                  ? 'У цій одиниці немає деталізації за районами.'
+                  : 'Немає даних для відображення за обраними фільтрами.'}
+              </p>
+              {level === 2 && (
+                <button
+                  onClick={goBack}
+                  className="mt-3 text-sm font-medium text-brand-600 hover:text-brand-700"
+                >
+                  ← Повернутися до областей
+                </button>
+              )}
+            </div>
+          </div>
         ) : (
           <div className="grid h-full place-items-center text-ink-500">
             {error ?? 'Завантаження…'}
