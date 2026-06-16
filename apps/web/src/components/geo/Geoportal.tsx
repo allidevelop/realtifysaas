@@ -37,6 +37,11 @@ export function Geoportal({ access }: { access: GeoAccess }) {
   const [values, setValues] = useState<Record<string, number>>({})
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  // Версия загруженных данных: инкремент вместе с setGeojson, служит ключом ремонта
+  // слоя карты. КРИТИЧНО: level/parent меняются синхронно (клик), а данные приходят
+  // асинхронно — ключ должен меняться по факту прихода данных, иначе react-leaflet
+  // не обновит GeoJSON-слой (он реагирует только на смену key).
+  const [loadId, setLoadId] = useState(0)
 
   const formatValue = useCallback(
     (v: number) => (metric === 'count' ? `${Math.round(v)} шт` : `${formatPrice(Math.round(v), 'UAH')}/м²`),
@@ -64,6 +69,7 @@ export function Geoportal({ access }: { access: GeoAccess }) {
         if (!cancelled) {
           setGeojson(u)
           setValues(m.values)
+          setLoadId((n) => n + 1)
         }
       } catch (e) {
         if (!cancelled) setError(e instanceof Error ? e.message : 'Помилка')
@@ -94,7 +100,9 @@ export function Geoportal({ access }: { access: GeoAccess }) {
     setLevel(1)
   }, [])
 
-  const dataKey = `${level}:${parent}:${period}:${segment}:${operation}:${metric}`
+  // Ключ ремонта карты — по версии фактически загруженных данных (не по level/parent,
+  // которые меняются раньше прихода данных). + metric, т.к. от него зависит окраска.
+  const dataKey = `${loadId}:${metric}`
   const range = useMemo(() => {
     const nums = Object.values(values)
     return nums.length ? { min: Math.min(...nums), max: Math.max(...nums) } : { min: 0, max: 0 }
