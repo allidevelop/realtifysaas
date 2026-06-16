@@ -18,7 +18,7 @@ export async function getGeoAccess(user: EntitlementSubject): Promise<GeoAccess>
   ])
   const full = entitlements.length > 0
   const allowedPeriods = full ? meta.periods : meta.periods.slice(-1)
-  return { ...meta, allowedPeriods, canDrill: full, full }
+  return { ...meta, usdRate: meta.usdRate ?? 41, allowedPeriods, canDrill: full, full }
 }
 
 export function isPeriodAllowed(access: GeoAccess, period: string): boolean {

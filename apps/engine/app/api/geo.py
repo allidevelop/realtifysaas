@@ -6,6 +6,7 @@
 
 from __future__ import annotations
 
+import os
 from typing import Any
 
 from fastapi import APIRouter, Query
@@ -14,6 +15,9 @@ from psycopg.rows import dict_row
 from app.db import get_conn
 
 router = APIRouter(prefix="/api/geo", tags=["geo"])
+
+# Демо-курс UAH→USD для переключателя валют на карте (на проде — курс НБУ на дату).
+GEO_USD_RATE = float(os.getenv("REPORT_USD_RATE", "41"))
 
 
 @router.get("/units")
@@ -152,4 +156,5 @@ def meta() -> dict[str, Any]:
         "segments": ["apartment", "house", "commercial", "land"],
         "operations": ["sale", "rent"],
         "metrics": ["avg_price_sqm", "median_price_sqm", "count"],
+        "usdRate": GEO_USD_RATE,
     }

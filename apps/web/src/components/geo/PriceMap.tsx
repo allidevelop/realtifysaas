@@ -17,23 +17,28 @@ export interface UnitProps {
   population?: number | null
 }
 
+// 5-полосная классифицированная шкала (квантильные пороги считаются в Geoportal
+// и передаются сюда — легенда и карта используют ОДНУ шкалу).
+export interface ColorScale {
+  thresholds: number[] // 0..4 возрастающих порога
+  colors: string[] // 5 цветов от светлого к тёмному
+}
+
 interface PriceMapProps {
   geojson: FeatureCollection
   values: Record<string, number>
   formatValue: (v: number) => string
   onSelect: (id: number, name: string, level: number) => void
+  scale: ColorScale
   // Ключ перерисовки слоя (при смене уровня/периода/метрики).
   dataKey: string
 }
 
-const SCALE_FROM = [224, 236, 255] // #e0ecff
-const SCALE_TO = [27, 68, 173] // #1b44ad
-
-function colorFor(value: number | undefined, min: number, max: number): string {
+function colorFor(value: number | undefined, scale: ColorScale): string {
   if (value === undefined) return '#e5e7eb'
-  const t = max > min ? (value - min) / (max - min) : 0.5
-  const c = SCALE_FROM.map((f, i) => Math.round(f + (SCALE_TO[i] - f) * t))
-  return `rgb(${c[0]}, ${c[1]}, ${c[2]})`
+  let i = 0
+  while (i < scale.thresholds.length && value > scale.thresholds[i]) i++
+  return scale.colors[Math.min(i, scale.colors.length - 1)]
 }
 
 function FitToData({ geojson, dataKey }: { geojson: FeatureCollection; dataKey: string }) {
@@ -55,16 +60,13 @@ export default function PriceMap({
   values,
   formatValue,
   onSelect,
+  scale,
   dataKey,
 }: PriceMapProps) {
-  const nums = Object.values(values)
-  const min = nums.length ? Math.min(...nums) : 0
-  const max = nums.length ? Math.max(...nums) : 1
-
   const style = (feature?: Feature<Geometry, UnitProps>): PathOptions => {
     const v = feature ? values[String(feature.properties.id)] : undefined
     return {
-      fillColor: colorFor(v, min, max),
+      fillColor: colorFor(v, scale),
       weight: 1,
       opacity: 1,
       color: '#ffffff',

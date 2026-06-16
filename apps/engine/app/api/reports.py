@@ -374,3 +374,90 @@ def stat_report(req: StatReportRequest) -> Response:
     d.gap()
     d.line("Джерело: агреговані дані ГІС (демонстраційні). Курс USD — демо-константа.", size=8)
     return Response(content=d.output(), media_type="application/pdf")
+
+
+class GeoReportRequest(BaseModel):
+    period: str
+    segment: str = "apartment"
+    operation: str = "sale"
+    metric: str = "avg_price_sqm"
+    level: int = 1
+    parent: int | None = None
+    currency: str = "UAH"
+
+
+_METRIC_LABEL = {
+    "avg_price_sqm": "Середня ціна за кв.м",
+    "median_price_sqm": "Медіанна ціна за кв.м",
+    "count": "Кількість оголошень",
+}
+
+
+@router.post("/geo-portal")
+def geo_portal_report(req: GeoReportRequest) -> Response:
+    """PDF-зріз поточного вигляду геопорталу: ранжований перелік АТЕ за показником."""
+    where_unit = "u.parent_id = %(parent)s" if req.parent is not None else "u.level = %(level)s"
+    sql = f"""
+        SELECT u.name AS name, m.value AS value
+          FROM gis.aggregated_metrics m
+          JOIN gis.admin_units u ON u.id = m.admin_unit_id
+         WHERE m.period = %(period)s AND m.segment = %(segment)s
+           AND m.operation = %(operation)s AND m.metric_type = %(metric)s
+           AND {where_unit}
+         ORDER BY m.value DESC
+    """
+    params = {
+        "period": req.period, "segment": req.segment, "operation": req.operation,
+        "metric": req.metric, "level": req.level, "parent": req.parent,
+    }
+    scope = "Україна"
+    with get_conn() as conn, conn.cursor(row_factory=dict_row) as cur:
+        if req.parent is not None:
+            cur.execute("SELECT name FROM gis.admin_units WHERE id = %s", (req.parent,))
+            prow = cur.fetchone()
+            if prow:
+                scope = prow["name"]
+        cur.execute(sql, params)
+        rows = [(r["name"], float(r["value"])) for r in cur.fetchall()]
+
+    is_price = req.metric in ("avg_price_sqm", "median_price_sqm")
+    use_usd = is_price and req.currency == "USD"
+    suffix = "" if not is_price else (" $/кв.м" if use_usd else " грн/кв.м")
+
+    def conv(v: float) -> float:
+        return v / REPORT_USD_RATE if use_usd else v
+
+    def fmt(v: float) -> str:
+        if not is_price:
+            return f"{v:,.0f}".replace(",", " ")
+        return f"{conv(v):,.0f}".replace(",", " ") + suffix
+
+    seg = SEG_LABEL.get(req.segment, req.segment)
+    op = OP_LABEL.get(req.operation, req.operation)
+    metric_label = _METRIC_LABEL.get(req.metric, req.metric)
+
+    d = _Doc()
+    d.line(f"ГЕОПОРТАЛ — {metric_label}", size=15)
+    d.gap()
+    d.line(f"Територія: {scope}")
+    d.line(f"Період: {req.period} · {seg} · {op}")
+    d.gap()
+
+    if not rows:
+        d.line("Немає даних за обраними фільтрами.")
+        return Response(content=d.output(), media_type="application/pdf")
+
+    top = rows[:12]
+    d.band("Топ територіальних одиниць")
+    d.bars([n for n, _ in top], [conv(v) for _, v in top])
+    d.gap()
+
+    d.band(f"Усі одиниці ({len(rows)})")
+    d.table(
+        ["Територіальна одиниця", metric_label],
+        [[n, fmt(v)] for n, v in rows],
+        widths=[d.pdf.epw * 0.6, d.pdf.epw * 0.4],
+    )
+    d.gap()
+    d.line("Джерело: агреговані дані ГІС (демонстраційні). Курс USD — демо-константа.", size=8)
+    return Response(content=d.output(), media_type="application/pdf")

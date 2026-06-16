@@ -19,6 +19,8 @@ export interface GeoMeta {
   segments: string[]
   operations: string[]
   metrics: string[]
+  /** Демо-курс UAH→USD для переключателя валют на карте (engine /meta). */
+  usdRate?: number
 }
 
 export interface GeoMetricsResponse {
