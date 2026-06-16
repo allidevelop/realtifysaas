@@ -102,18 +102,18 @@ export function AutoValuationModule({ quota }: { quota: number }) {
 
   return (
     <div className="mt-6 grid gap-5 lg:grid-cols-2">
-      <form ref={formRef} onSubmit={start} className="space-y-3 rounded-2xl border border-ink-100 bg-white p-5">
+      <form ref={formRef} onSubmit={start} className="space-y-3 rounded-2xl border border-ink-200 bg-surface p-6 shadow-sm">
         <p className="rounded-lg bg-ink-100/40 px-3 py-2 text-xs text-ink-600">
           Завантажте PDF (витяг/техпаспорт) і ваш Excel-шаблон розрахунку. Система розпізнає обʼєкт,
           підбере аналоги, заповнить шаблон і згенерує Word-звіт. Один звіт — 1 запит.
         </p>
         <label className="block text-sm">
           <span className="mb-1 block font-medium text-ink-700">PDF витяг/техпаспорт *</span>
-          <input name="pdf_file" type="file" accept="application/pdf,.pdf" required className="block w-full text-sm" />
+          <input name="pdf_file" type="file" accept="application/pdf,.pdf" required className="block w-full text-sm text-ink-600 file:mr-3 file:rounded-lg file:border file:border-ink-200 file:bg-ink-100 file:px-3.5 file:py-2 file:text-sm file:font-medium file:text-ink-700 hover:file:bg-ink-200" />
         </label>
         <label className="block text-sm">
           <span className="mb-1 block font-medium text-ink-700">Excel-шаблон розрахунку (.xls/.xlsx) *</span>
-          <input name="excel_template" type="file" accept=".xls,.xlsx" required className="block w-full text-sm" />
+          <input name="excel_template" type="file" accept=".xls,.xlsx" required className="block w-full text-sm text-ink-600 file:mr-3 file:rounded-lg file:border file:border-ink-200 file:bg-ink-100 file:px-3.5 file:py-2 file:text-sm file:font-medium file:text-ink-700 hover:file:bg-ink-200" />
         </label>
         <div className="grid grid-cols-2 gap-3">
           <label className="block text-sm">
@@ -157,7 +157,7 @@ export function AutoValuationModule({ quota }: { quota: number }) {
       </form>
 
       {/* Прогрес + результат */}
-      <div className="rounded-2xl border border-ink-100 bg-white p-5">
+      <div className="rounded-2xl border border-ink-200 bg-surface p-6 shadow-sm">
         {!job && !jobId && (
           <p className="text-sm text-ink-400">Тут зʼявиться прогрес генерації та готові файли звіту.</p>
         )}

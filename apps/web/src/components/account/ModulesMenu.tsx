@@ -35,7 +35,9 @@ export function ModulesMenu() {
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
-        className="flex cursor-pointer items-center gap-1 whitespace-nowrap text-sm font-medium text-ink-700 hover:text-brand-700"
+        className={`flex items-center gap-1 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium hover:bg-ink-100 hover:text-ink-900 ${
+          open ? 'bg-ink-100 text-ink-900' : 'text-ink-700'
+        }`}
       >
         Модулі
         <svg
@@ -52,13 +54,13 @@ export function ModulesMenu() {
         </svg>
       </button>
       {open && (
-        <div className="absolute left-0 top-full z-50 mt-2 w-64 rounded-xl border border-ink-100 bg-white p-2 shadow-lg">
+        <div className="absolute left-0 top-full z-50 mt-2 w-72 rounded-2xl border border-ink-200 bg-surface p-2 shadow-lg">
           {MODULE_KEYS.map((key) => (
             <Link
               key={key}
               href={`/account/${key}`}
               onClick={() => setOpen(false)}
-              className="block rounded-lg px-3 py-2 text-sm text-ink-700 hover:bg-ink-100/60 hover:text-brand-700"
+              className="block rounded-xl px-3 py-2 text-sm font-medium text-ink-700 hover:bg-brand-50 hover:text-brand-700"
             >
               {MODULE_META[key].title}
             </Link>

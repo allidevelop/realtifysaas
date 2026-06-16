@@ -1,69 +1,173 @@
 @import 'tailwindcss';
 @plugin '@tailwindcss/typography';
 
-/* Дизайн-токены платформы (ТЗ §5). Tailwind v4 — конфиг в CSS. */
+/* ───────────────────────────────────────────────────────────────────────────
+   Дизайн-система Realtify — proptech-оцінка: тепла «paper & ink» нейтраль +
+   глибокий смарагдовий акцент (гроші/нерухомість, не дефолтний синій). Шрифти:
+   Manrope (UI) + Lora (засічний дисплей). Мета — дорогий, професійний, не «AI-дефолт».
+   ─────────────────────────────────────────────────────────────────────────── */
 @theme {
-  --color-brand-50: #eef5ff;
-  --color-brand-100: #d9e8ff;
-  --color-brand-200: #bcd7ff;
-  --color-brand-300: #8ebdff;
-  --color-brand-400: #5897ff;
-  --color-brand-500: #2f6fed;
-  --color-brand-600: #1f55d6;
-  --color-brand-700: #1b44ad;
-  --color-brand-800: #1c3b8a;
-  --color-brand-900: #1c356f;
+  /* Акцент — смарагд (глибокий, насичений) */
+  --color-brand-50: #ecfaf2;
+  --color-brand-100: #d2f1df;
+  --color-brand-200: #a6e2c2;
+  --color-brand-300: #6fcc9f;
+  --color-brand-400: #3cae7c;
+  --color-brand-500: #1b8f60;
+  --color-brand-600: #0d7a4f;
+  --color-brand-700: #0a6141;
+  --color-brand-800: #0c4e36;
+  --color-brand-900: #0b402d;
 
-  --color-ink-900: #0f172a;
-  --color-ink-700: #334155;
-  --color-ink-500: #64748b;
-  --color-ink-300: #cbd5e1;
-  --color-ink-100: #f1f5f9;
+  /* Нейтраль — тепла «stone» (не холодний slate) */
+  --color-ink-900: #1c1917;
+  --color-ink-800: #292524;
+  --color-ink-700: #44403c;
+  --color-ink-500: #78716c;
+  --color-ink-400: #a8a29e;
+  --color-ink-300: #d6d3d1;
+  --color-ink-200: #e7e5e3;
+  --color-ink-100: #f1efec;
 
-  --font-sans:
-    ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
-    sans-serif;
+  /* Поверхні */
+  --color-paper: #f7f5f1; /* тло сторінки — тепле off-white */
+  --color-surface: #ffffff; /* картки */
+
+  /* Акцент-2 — теплий «латунний» для рідкісних premium-деталей */
+  --color-accent-500: #b4884a;
+
+  --font-sans: var(--font-manrope), ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-serif: var(--font-lora), 'Iowan Old Style', Georgia, 'Times New Roman', serif;
+
+  /* М'які, теплі тіні (premium-глибина замість холодних дефолтних) */
+  --shadow-xs: 0 1px 2px rgba(28, 25, 23, 0.05);
+  --shadow-sm: 0 1px 2px rgba(28, 25, 23, 0.04), 0 2px 4px rgba(28, 25, 23, 0.05);
+  --shadow-md: 0 6px 16px -4px rgba(28, 25, 23, 0.1), 0 2px 6px -2px rgba(28, 25, 23, 0.06);
+  --shadow-lg: 0 16px 40px -12px rgba(28, 25, 23, 0.16), 0 6px 16px -6px rgba(28, 25, 23, 0.08);
 }
 
-html {
-  scroll-behavior: smooth;
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--color-paper);
+    color: var(--color-ink-900);
+    font-family: var(--font-sans);
+    font-feature-settings: 'cv11', 'ss01';
+    letter-spacing: -0.011em;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Заголовки сторінок — засічний дисплей (дорогий редакційний тон) */
+  h1 {
+    font-family: var(--font-serif);
+    letter-spacing: -0.021em;
+    font-feature-settings: 'liga', 'kern';
+  }
+  h2 {
+    letter-spacing: -0.018em;
+  }
+
+  /* Premium-фокус: акуратне кільце замість дефолтного контуру */
+  *:focus-visible {
+    outline: 2px solid var(--color-brand-500);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  ::selection {
+    background-color: var(--color-brand-100);
+    color: var(--color-brand-900);
+  }
+
+  /* Плавні мікро-взаємодії */
+  a,
+  button,
+  [role='button'],
+  input,
+  select,
+  textarea {
+    transition:
+      color 0.15s ease,
+      background-color 0.15s ease,
+      border-color 0.15s ease,
+      box-shadow 0.15s ease,
+      transform 0.15s ease,
+      opacity 0.15s ease;
+  }
+
+  /* Курсор на клікабельних (Tailwind v4 Preflight ставить cursor:default на button) */
+  button:not(:disabled),
+  [role='button'],
+  summary,
+  select,
+  a[href] {
+    cursor: pointer;
+  }
+  button:disabled,
+  [aria-disabled='true'] {
+    cursor: not-allowed;
+  }
+
+  /* Тонкий теплий скролбар */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-ink-300) transparent;
+  }
+  *::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  *::-webkit-scrollbar-thumb {
+    background-color: var(--color-ink-300);
+    border-radius: 9999px;
+    border: 3px solid transparent;
+    background-clip: padding-box;
+  }
+  *::-webkit-scrollbar-thumb:hover {
+    background-color: var(--color-ink-400);
+  }
 }
 
-/* Tailwind v4 Preflight ставит cursor:default на кнопки — возвращаем «руку»
-   на все кликабельные элементы. */
-button:not(:disabled),
-[role='button'],
-summary,
-select,
-a[href] {
-  cursor: pointer;
-}
-button:disabled,
-[aria-disabled='true'] {
-  cursor: not-allowed;
-}
+@layer components {
+  /* Поля вводу/селекти — рафінований premium-стиль */
+  .geo-select {
+    width: 100%;
+    border-radius: 0.625rem;
+    border: 1px solid var(--color-ink-200);
+    background-color: var(--color-surface);
+    padding: 0.5625rem 0.75rem;
+    font-size: 0.875rem;
+    color: var(--color-ink-900);
+    box-shadow: var(--shadow-xs);
+  }
+  .geo-select::placeholder {
+    color: var(--color-ink-400);
+  }
+  .geo-select:hover {
+    border-color: var(--color-ink-300);
+  }
+  .geo-select:focus {
+    outline: none;
+    border-color: var(--color-brand-500);
+    box-shadow: 0 0 0 3px var(--color-brand-100);
+  }
 
-/* Селекты панели фильтров геопортала. */
-.geo-select {
-  width: 100%;
-  border-radius: 0.5rem;
-  border: 1px solid var(--color-ink-300);
-  padding: 0.5rem 0.625rem;
-  font-size: 0.875rem;
-  background-color: #ffffff;
-}
-.geo-select:focus {
-  outline: none;
-  border-color: var(--color-brand-500);
+  /* Уніфікована premium-картка (для opt-in використання) */
+  .card-surface {
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-ink-200);
+    border-radius: 1rem;
+    box-shadow: var(--shadow-sm);
+  }
 }
 
 /* Leaflet поверх остального UI кабинета. */
 .leaflet-container {
   z-index: 0;
-}
-
-body {
-  background-color: #ffffff;
-  color: var(--color-ink-900);
-  font-family: var(--font-sans);
+  background-color: var(--color-ink-100);
 }

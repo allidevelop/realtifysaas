@@ -63,7 +63,7 @@ const MET: Record<Lang, Record<string, string>> = {
 }
 
 const PRICE_METRICS = ['avg_price_sqm', 'median_price_sqm']
-const COLORS5 = ['#e0ecff', '#a9c4f0', '#6f97e0', '#3f6bc9', '#1b44ad']
+const COLORS5 = ['#d2f1df', '#9fe0bd', '#5fc295', '#1b8f60', '#0a6141']
 
 // Квантильные пороги (20/40/60/80%) → 5 классов. Дубли (мало уникальных значений) убираем.
 function computeScale(values: number[]): ColorScale {

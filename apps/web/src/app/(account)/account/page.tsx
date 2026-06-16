@@ -47,10 +47,10 @@ export default async function DashboardPage() {
           return (
             <div
               key={card.meta.key}
-              className="flex flex-col rounded-2xl border border-ink-100 bg-white p-6 shadow-sm"
+              className="group flex flex-col rounded-2xl border border-ink-200 bg-surface p-6 shadow-sm transition hover:-translate-y-0.5 hover:border-ink-300 hover:shadow-md"
             >
               <div className="flex items-start justify-between">
-                <div className="grid h-11 w-11 place-items-center rounded-lg bg-brand-50 text-brand-600">
+                <div className="grid h-12 w-12 place-items-center rounded-xl bg-brand-50 text-brand-600 ring-1 ring-inset ring-brand-100">
                   <Icon name={card.meta.icon} className="h-6 w-6" />
                 </div>
                 <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${badge.cls}`}>

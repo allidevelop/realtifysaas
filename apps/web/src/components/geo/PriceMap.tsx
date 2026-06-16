@@ -81,7 +81,7 @@ export default function PriceMap({
     layer.on({
       mouseover: (e: LeafletMouseEvent) => {
         const t = e.target as L.Path
-        t.setStyle({ weight: 2.5, color: '#1b44ad', fillOpacity: 0.95 })
+        t.setStyle({ weight: 2.5, color: '#0a6141', fillOpacity: 0.95 })
         t.bringToFront()
       },
       mouseout: (e: LeafletMouseEvent) => {
