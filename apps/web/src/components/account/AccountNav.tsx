@@ -1,7 +1,6 @@
 import Link from 'next/link'
 
 import { ModulesMenu } from '@/components/account/ModulesMenu'
-import { Container } from '@/components/Container'
 import { logoutAction } from '@/app/(account)/actions'
 import type { User } from '@/payload-types'
 
@@ -9,7 +8,7 @@ import type { User } from '@/payload-types'
 export function AccountNav({ user }: { user: User | null }) {
   return (
     <header className="border-b border-ink-100 bg-white">
-      <Container className="flex h-16 items-center justify-between gap-4">
+      <div className="mx-auto flex h-16 w-full max-w-[1760px] items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
         <Link href={user ? '/account' : '/'} className="flex items-center gap-2 text-lg font-bold">
           <span className="grid h-8 w-8 place-items-center rounded-md bg-brand-600 text-white">R</span>
           Realtify
@@ -63,7 +62,7 @@ export function AccountNav({ user }: { user: User | null }) {
             </Link>
           )}
         </div>
-      </Container>
+      </div>
     </header>
   )
 }
