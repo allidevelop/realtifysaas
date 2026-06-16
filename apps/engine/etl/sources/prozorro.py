@@ -135,10 +135,15 @@ def _bump(iso: str) -> str:
 class ProzorroSaleSource:
     name = "prozorro"
 
-    def __init__(self, since: str | None = None, limit: int = 100, max_pages: int = 50):
+    def __init__(
+        self, since: str | None = None, limit: int | None = None, max_pages: int | None = None
+    ):
         self.since = since or os.getenv("PROZORRO_SINCE") or _default_since()
-        self.limit = limit
-        self.max_pages = max_pages
+        # Бесплатный источник (без ключа), но env-контроль объёма прогона удобен для cron.
+        self.limit = limit if limit is not None else int(os.getenv("PROZORRO_LIMIT", "100"))
+        self.max_pages = (
+            max_pages if max_pages is not None else int(os.getenv("PROZORRO_MAX_PAGES", "50"))
+        )
 
     def fetch(self) -> Iterator[RawListing]:
         cursor = self.since

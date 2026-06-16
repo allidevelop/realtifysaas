@@ -1,5 +1,6 @@
 import crypto from 'crypto'
 
+import { DataBadge } from '@/components/account/DataBadge'
 import { Paywall } from '@/components/account/Paywall'
 import { Icon } from '@/components/Icon'
 import { UnitCombobox } from '@/components/valuation/UnitCombobox'
@@ -27,6 +28,9 @@ export default async function ReportGeneratorPage({ searchParams }: SP) {
         <div>
           <h1 className="text-2xl font-bold text-ink-900">{meta.title}</h1>
           <p className="text-sm text-ink-500">{meta.summary}</p>
+          <div className="mt-1.5">
+            <DataBadge kind="demo" note="агреговані демо-показники" />
+          </div>
         </div>
       </div>
 

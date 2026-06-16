@@ -12,6 +12,15 @@ export function formatPrice(value: number, currency = 'UAH'): string {
   return `${formatted} ${symbol}`
 }
 
+// Цена в формате «X тис.грн» (как у конкурента — крупное число + единица текстом,
+// чтобы цена воспринималась мягче). 12000 → {value:'12', unit:'тис.грн'};
+// 1100 → {value:'1,1'}; 0 → {value:'0'}. Только для гривны.
+export function formatThousands(uah: number): { value: string; unit: string } {
+  const k = uah / 1000
+  const value = Number.isInteger(k) ? String(k) : k.toFixed(1).replace('.', ',')
+  return { value, unit: 'тис.грн' }
+}
+
 export function billingPeriodLabel(period: string): string {
   switch (period) {
     case 'month':

@@ -125,6 +125,7 @@ export function ListingsSearch({ units, quota }: { units: UnitOption[]; quota: n
             <span className="mb-1 block font-medium text-ink-700">Джерело</span>
             <select name="source" defaultValue="domria" className="geo-select">
               <option value="domria">DOM.RIA (реальні)</option>
+              <option value="prozorro">Prozorro (реальні)</option>
               <option value="">усі джерела</option>
             </select>
           </label>
@@ -228,9 +229,9 @@ export function ListingsSearch({ units, quota }: { units: UnitOption[]; quota: n
               </tbody>
             </table>
           </div>
-          {/* ToS DOM.RIA: видимый бэклинк на источник */}
+          {/* ToS DOM.RIA: видимый бэклинк на источник + Prozorro (відкриті дані) */}
           <p className="mt-3 text-xs text-ink-400">
-            Джерело оголошень:{' '}
+            Джерела даних:{' '}
             <a
               href="https://dom.ria.com"
               target="_blank"
@@ -238,6 +239,15 @@ export function ListingsSearch({ units, quota }: { units: UnitOption[]; quota: n
               className="text-brand-600 hover:underline"
             >
               dom.ria.com
+            </a>
+            ,{' '}
+            <a
+              href="https://prozorro.sale"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-brand-600 hover:underline"
+            >
+              Prozorro.Sale
             </a>
             . Ціни нормалізовано до грн; дані наведено в інформаційних цілях.
           </p>

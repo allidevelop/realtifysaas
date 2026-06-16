@@ -1,11 +1,12 @@
 import { Icon } from '@/components/Icon'
 import { ButtonLink } from '@/components/ui/Button'
 import { cn } from '@/lib/cn'
-import { billingPeriodLabel, formatPrice } from '@/lib/format'
+import { billingPeriodLabel, formatPrice, formatThousands } from '@/lib/format'
 import type { ServicePlan } from '@/payload-types'
 
 export function PlanCard({ plan }: { plan: ServicePlan }) {
   const highlighted = Boolean(plan.highlighted)
+  const t = formatThousands(plan.price)
   return (
     <div
       className={cn(
@@ -23,10 +24,17 @@ export function PlanCard({ plan }: { plan: ServicePlan }) {
       </div>
       {plan.tagline && <p className="mt-1 text-sm text-ink-500">{plan.tagline}</p>}
 
-      <div className="mt-5 flex items-baseline gap-1">
-        <span className="text-4xl font-bold text-ink-900">
-          {plan.price === 0 ? 'Бесплатно' : formatPrice(plan.price, plan.currency)}
-        </span>
+      <div className="mt-5 flex items-baseline gap-1.5">
+        {plan.currency === 'UAH' ? (
+          <>
+            <span className="text-4xl font-bold text-ink-900">{t.value}</span>
+            <span className="text-base text-ink-500">{t.unit}</span>
+          </>
+        ) : (
+          <span className="text-4xl font-bold text-ink-900">
+            {plan.price === 0 ? 'Безкоштовно' : formatPrice(plan.price, plan.currency)}
+          </span>
+        )}
         {plan.price > 0 && plan.billingPeriod && (
           <span className="text-sm text-ink-500">{billingPeriodLabel(plan.billingPeriod)}</span>
         )}

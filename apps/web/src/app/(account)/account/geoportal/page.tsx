@@ -1,3 +1,4 @@
+import { DataBadge } from '@/components/account/DataBadge'
 import { Geoportal } from '@/components/geo/Geoportal'
 import { Icon } from '@/components/Icon'
 import { requireUser } from '@/lib/auth'
@@ -22,6 +23,9 @@ export default async function GeoportalPage() {
             Показники наразі демонстраційні; реальні дані накопичуються з DOM.RIA. Клік по
             області — деталізація до районів.
           </p>
+          <div className="mt-1.5">
+            <DataBadge kind="demo" note="межі реальні (КАТОТТГ/OSM); показники — демо" />
+          </div>
         </div>
       </div>
 

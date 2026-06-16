@@ -1,6 +1,6 @@
 import { buyPackAction } from '@/app/(account)/billing-actions'
 import { Icon } from '@/components/Icon'
-import { formatPrice } from '@/lib/format'
+import { formatPrice, formatThousands } from '@/lib/format'
 import type { ServicePlan } from '@/payload-types'
 
 // Карточка пакета с кнопкой покупки (форма → buyPackAction → провайдер оплаты).
@@ -23,8 +23,15 @@ export function PackBuyCard({ pack, canBuyForOrg = false }: { pack: ServicePlan;
       </div>
       <p className="mt-1 text-sm text-ink-500">{accessInfo}</p>
 
-      <div className="mt-4 text-3xl font-bold text-ink-900">
-        {formatPrice(pack.price, pack.currency)}
+      <div className="mt-4 flex items-baseline gap-1.5 text-ink-900">
+        {pack.currency === 'UAH' ? (
+          <>
+            <span className="text-3xl font-bold">{formatThousands(pack.price).value}</span>
+            <span className="text-sm text-ink-500">{formatThousands(pack.price).unit}</span>
+          </>
+        ) : (
+          <span className="text-3xl font-bold">{formatPrice(pack.price, pack.currency)}</span>
+        )}
       </div>
 
       <ul className="mt-4 flex flex-1 flex-col gap-2 text-sm text-ink-700">
