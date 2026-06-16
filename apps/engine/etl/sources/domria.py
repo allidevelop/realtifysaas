@@ -75,8 +75,10 @@ def map_info(
     rid = info.get("realty_id")
     if rid is None:
         return None
-    # is_commercial уточняет сегмент (офис/коммерция в жилом поиске не ожидается, но на всякий).
-    seg = "commercial" if info.get("is_commercial") in (1, "1", True) else segment
+    # Сегмент берём из группы поиска (category/realty_type заданы явно). НЕ доверяем
+    # info.is_commercial: на практике он = 1 и на обычных квартирах (видимо «від агентства»),
+    # что ошибочно перекидывало жильё в commercial. Проверено на реальном API 2026-06-16.
+    seg = segment
     bu = info.get("beautiful_url")
     published = str(info.get("publishing_date") or info.get("created_at") or "")[:10]
     raw_price = info.get("price") if info.get("price") is not None else info.get("price_total")
@@ -101,14 +103,17 @@ class DomRiaSource:
     def __init__(
         self,
         groups: list[SearchGroup] | None = None,
-        max_pages: int = 1,
-        max_items: int = 25,
+        max_pages: int | None = None,
+        max_items: int | None = None,
     ):
         self.api_key = os.getenv("DOMRIA_API_KEY", "")
         self.groups = groups or search_groups()
-        self.max_pages = max_pages
-        # Жёсткий предел info-запросов за прогон — держим под лимитом 30/час.
-        self.max_items = max_items
+        # Лимиты: явный аргумент (тесты) → ENV → дефолт. Жёсткий предел info-запросов
+        # за прогон держит нас под freemium-лимитом 30/час и 1000/мес.
+        env_pages = int(os.getenv("DOMRIA_MAX_PAGES", "1"))
+        env_items = int(os.getenv("DOMRIA_MAX_ITEMS", "25"))
+        self.max_pages = max_pages if max_pages is not None else env_pages
+        self.max_items = max_items if max_items is not None else env_items
         self.state_id = os.getenv("DOMRIA_STATE_ID")
 
     def fetch(self) -> Iterator[RawListing]:
