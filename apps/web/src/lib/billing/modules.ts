@@ -42,7 +42,7 @@ export const MODULE_META: Record<ModuleKey, ModuleMeta> = {
     title: 'АРМ Аналітика',
     icon: 'report',
     accessType: 'quota',
-    summary: 'Поиск объявлений о продаже/аренде на текущую и ретроспективную даты, экспорт в Excel.',
+    summary: 'Поиск реальных объявлений (DOM.RIA): фильтры, средние/медиана по выборке, экспорт в Excel/CSV.',
     order: 2,
   },
   'express-valuation': {

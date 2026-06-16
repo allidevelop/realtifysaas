@@ -13,11 +13,22 @@ export interface Listing {
   published: string
   unit: string
   pricePerSqm: number | null
+  source: string
+  url: string | null
+}
+
+export interface ListingsStats {
+  count: number
+  avgPrice: number | null
+  medianPrice: number | null
+  avgPpsqm: number | null
+  medianPpsqm: number | null
 }
 
 export interface ListingsResult {
   items: Listing[]
   total: number
+  stats: ListingsStats
 }
 
 export interface SeriesResult {

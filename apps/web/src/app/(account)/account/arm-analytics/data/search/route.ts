@@ -17,10 +17,12 @@ export async function GET(req: Request) {
     adminUnitId: sp.get('adminUnitId') || undefined,
     segment: sp.get('segment') || undefined,
     operation: sp.get('operation') || undefined,
+    source: sp.get('source') || undefined,
     areaMin: sp.get('areaMin') || undefined,
     areaMax: sp.get('areaMax') || undefined,
     priceMin: sp.get('priceMin') || undefined,
     priceMax: sp.get('priceMax') || undefined,
+    sort: sp.get('sort') || undefined,
     limit: 50,
   })
   return Response.json(data)

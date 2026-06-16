@@ -1,9 +1,22 @@
 import { searchListings, type Listing } from '@/lib/analytics/engine'
 import { getCurrentUser } from '@/lib/auth'
 import { consumeQuota } from '@/lib/billing/quota'
+import { buildXlsx } from '@/lib/xlsx'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
+
+const HEAD = [
+  'id', 'segment', 'operation', 'area', 'price', 'pricePerSqm',
+  'currency', 'published', 'unit', 'source', 'url',
+]
+
+function row(it: Listing): (string | number | null)[] {
+  return [
+    it.id, it.segment, it.operation, it.area, it.price, it.pricePerSqm,
+    it.currency, it.published, it.unit, it.source, it.url,
+  ]
+}
 
 function csvCell(v: unknown): string {
   const s = v == null ? '' : String(v)
@@ -11,19 +24,12 @@ function csvCell(v: unknown): string {
 }
 
 function toCsv(items: Listing[]): string {
-  const head = ['id', 'segment', 'operation', 'area', 'price', 'pricePerSqm', 'currency', 'published', 'unit']
-  const lines = [head.join(';')]
-  for (const it of items) {
-    lines.push(
-      [it.id, it.segment, it.operation, it.area, it.price, it.pricePerSqm, it.currency, it.published, it.unit]
-        .map(csvCell)
-        .join(';'),
-    )
-  }
+  const lines = [HEAD.join(';')]
+  for (const it of items) lines.push(row(it).map(csvCell).join(';'))
   return '﻿' + lines.join('\n') // BOM для Excel/кириллицы
 }
 
-// Экспорт объявлений в CSV (списывает квоту arm-analytics). Обычная форма-POST.
+// Экспорт объявлений (списывает квоту arm-analytics). format = xlsx | csv.
 export async function POST(req: Request) {
   const user = await getCurrentUser()
   const back = (p: string) => Response.redirect(new URL(p, req.url), 303)
@@ -39,17 +45,30 @@ export async function POST(req: Request) {
     adminUnitId: String(form.get('adminUnitId') ?? '') || undefined,
     segment: String(form.get('segment') ?? '') || undefined,
     operation: String(form.get('operation') ?? '') || undefined,
+    source: String(form.get('source') ?? '') || undefined,
     areaMin: String(form.get('areaMin') ?? '') || undefined,
     areaMax: String(form.get('areaMax') ?? '') || undefined,
     priceMin: String(form.get('priceMin') ?? '') || undefined,
     priceMax: String(form.get('priceMax') ?? '') || undefined,
+    sort: String(form.get('sort') ?? '') || undefined,
     limit: 500,
   })
 
-  return new Response(toCsv(data.items), {
+  if (String(form.get('format') ?? 'xlsx') === 'csv') {
+    return new Response(toCsv(data.items), {
+      headers: {
+        'Content-Type': 'text/csv; charset=utf-8',
+        'Content-Disposition': 'attachment; filename="listings.csv"',
+      },
+    })
+  }
+
+  const xlsx = buildXlsx('Оголошення', HEAD, data.items.map(row))
+  return new Response(new Uint8Array(xlsx), {
     headers: {
-      'Content-Type': 'text/csv; charset=utf-8',
-      'Content-Disposition': 'attachment; filename="listings.csv"',
+      'Content-Type':
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'Content-Disposition': 'attachment; filename="listings.xlsx"',
     },
   })
 }
