@@ -63,7 +63,7 @@ export default async function OrganizationPage({
       : null
 
   return (
-    <div className="mx-auto w-full max-w-3xl px-4 py-10 sm:px-6">
+    <div className="mx-auto w-full max-w-5xl px-4 py-10 sm:px-6 lg:px-8">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-ink-900">Організація</h1>
         <Link href="/account/billing" className="text-sm text-brand-700 hover:underline">

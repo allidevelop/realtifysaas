@@ -11,7 +11,7 @@ export default async function GeoportalPage() {
   const access = await getGeoAccess(user)
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6">
+    <div className="w-full px-4 py-5 sm:px-6 lg:px-8">
       <div className="mb-6 flex items-center gap-3">
         <div className="grid h-12 w-12 place-items-center rounded-xl bg-brand-50 text-brand-600">
           <Icon name="map" className="h-7 w-7" />

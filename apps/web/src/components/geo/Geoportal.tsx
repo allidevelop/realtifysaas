@@ -374,8 +374,8 @@ export function Geoportal({ access }: { access: GeoAccess }) {
         {error && <p className="text-xs text-red-600">{error}</p>}
       </aside>
 
-      {/* Карта */}
-      <div className="h-[70vh] w-full overflow-hidden rounded-2xl border border-ink-100 bg-white">
+      {/* Карта — на весь доступный экран */}
+      <div className="h-[calc(100vh-11rem)] min-h-[520px] w-full overflow-hidden rounded-2xl border border-ink-100 bg-white">
         {geojson && geojson.features.length > 0 ? (
           <PriceMap
             geojson={geojson}

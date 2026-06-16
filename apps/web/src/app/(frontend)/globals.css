@@ -29,6 +29,20 @@ html {
   scroll-behavior: smooth;
 }
 
+/* Tailwind v4 Preflight ставит cursor:default на кнопки — возвращаем «руку»
+   на все кликабельные элементы. */
+button:not(:disabled),
+[role='button'],
+summary,
+select,
+a[href] {
+  cursor: pointer;
+}
+button:disabled,
+[aria-disabled='true'] {
+  cursor: not-allowed;
+}
+
 /* Селекты панели фильтров геопортала. */
 .geo-select {
   width: 100%;

@@ -6,7 +6,7 @@ export default async function SettingsPage() {
   const user = await requireUser('/account/settings')
 
   return (
-    <div className="mx-auto w-full max-w-2xl px-4 py-10 sm:px-6">
+    <div className="mx-auto w-full max-w-4xl px-4 py-10 sm:px-6 lg:px-8">
       <h1 className="text-2xl font-bold text-ink-900">Налаштування</h1>
       <div className="mt-6 space-y-4 rounded-2xl border border-ink-100 bg-white p-6 shadow-sm">
         <Row label="Ім'я" value={user?.name || '—'} />

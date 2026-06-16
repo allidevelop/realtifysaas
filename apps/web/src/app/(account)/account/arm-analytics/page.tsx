@@ -15,7 +15,7 @@ export default async function ArmAnalyticsPage() {
   const access = await resolveModuleAccess(user, 'arm-analytics')
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6">
+    <div className="mx-auto w-full max-w-[1760px] px-4 py-8 sm:px-6 lg:px-8">
       <div className="mb-2 flex items-center gap-3">
         <div className="grid h-12 w-12 place-items-center rounded-xl bg-brand-50 text-brand-600">
           <Icon name={meta.icon} className="h-7 w-7" />
