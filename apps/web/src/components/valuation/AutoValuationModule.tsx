@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react'
 
+import { Select } from '@/components/ui/Select'
+
 interface Artifact {
   name: string
   kind: string
@@ -116,14 +118,14 @@ export function AutoValuationModule({ quota }: { quota: number }) {
           <input name="excel_template" type="file" accept=".xls,.xlsx" required className="block w-full text-sm text-ink-600 file:mr-3 file:rounded-lg file:border file:border-ink-200 file:bg-ink-100 file:px-3.5 file:py-2 file:text-sm file:font-medium file:text-ink-700 hover:file:bg-ink-200" />
         </label>
         <div className="grid grid-cols-2 gap-3">
-          <label className="block text-sm">
+          <div className="block text-sm">
             <span className="mb-1 block font-medium text-ink-700">Тип обʼєкта</span>
-            <select name="profile" className="geo-select" defaultValue="apartment">
-              {PROFILES.map((p) => (
-                <option key={p.v} value={p.v}>{p.l}</option>
-              ))}
-            </select>
-          </label>
+            <Select
+              name="profile"
+              defaultValue="apartment"
+              options={PROFILES.map((p) => ({ value: p.v, label: p.l }))}
+            />
+          </div>
           <label className="block text-sm">
             <span className="mb-1 block font-medium text-ink-700">Мін. аналогів</span>
             <input name="required_count" type="number" defaultValue={5} min={1} max={10} className="geo-select" />

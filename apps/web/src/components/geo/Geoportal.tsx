@@ -5,6 +5,7 @@ import dynamic from 'next/dynamic'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import type { ColorScale } from './PriceMap'
+import { Select } from '@/components/ui/Select'
 import { formatPrice } from '@/lib/format'
 import type { GeoAccess } from '@/lib/geo/access'
 
@@ -290,32 +291,32 @@ export function Geoportal({ access }: { access: GeoAccess }) {
         )}
 
         <Field label={tr.period}>
-          <select value={period} onChange={(e) => setPeriod(e.target.value)} className="geo-select">
-            {access.allowedPeriods.map((p) => (
-              <option key={p} value={p}>{p}</option>
-            ))}
-          </select>
+          <Select
+            value={period}
+            onChange={setPeriod}
+            options={access.allowedPeriods.map((p) => ({ value: p, label: p }))}
+          />
         </Field>
         <Field label={tr.metric}>
-          <select value={metric} onChange={(e) => setMetric(e.target.value)} className="geo-select">
-            {access.metrics.map((m) => (
-              <option key={m} value={m}>{MET[lang][m] ?? m}</option>
-            ))}
-          </select>
+          <Select
+            value={metric}
+            onChange={setMetric}
+            options={access.metrics.map((m) => ({ value: m, label: MET[lang][m] ?? m }))}
+          />
         </Field>
         <Field label={tr.segment}>
-          <select value={segment} onChange={(e) => setSegment(e.target.value)} className="geo-select">
-            {access.segments.map((s) => (
-              <option key={s} value={s}>{SEG[lang][s] ?? s}</option>
-            ))}
-          </select>
+          <Select
+            value={segment}
+            onChange={setSegment}
+            options={access.segments.map((s) => ({ value: s, label: SEG[lang][s] ?? s }))}
+          />
         </Field>
         <Field label={tr.operation}>
-          <select value={operation} onChange={(e) => setOperation(e.target.value)} className="geo-select">
-            {access.operations.map((o) => (
-              <option key={o} value={o}>{OPS[lang][o] ?? o}</option>
-            ))}
-          </select>
+          <Select
+            value={operation}
+            onChange={setOperation}
+            options={access.operations.map((o) => ({ value: o, label: OPS[lang][o] ?? o }))}
+          />
         </Field>
 
         {/* Валюта — только для ценовых показателей */}

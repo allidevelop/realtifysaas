@@ -156,6 +156,17 @@
     border-color: var(--color-brand-500);
     box-shadow: 0 0 0 3px var(--color-brand-100);
   }
+  /* Нативные <select>: убираем дефолтную ОС-стрелку, ставим аккуратный шеврон */
+  select.geo-select {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    padding-right: 2.25rem;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%23a8a29e'><path fill-rule='evenodd' d='M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.17l3.71-3.94a.75.75 0 1 1 1.08 1.04l-4.25 4.5a.75.75 0 0 1-1.08 0l-4.25-4.5a.75.75 0 0 1 .02-1.06Z' clip-rule='evenodd'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 0.7rem center;
+    background-size: 1.1rem;
+  }
 
   /* Уніфікована premium-картка (для opt-in використання) */
   .card-surface {

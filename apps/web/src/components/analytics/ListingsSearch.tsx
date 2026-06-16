@@ -2,6 +2,7 @@
 
 import { useRef, useState } from 'react'
 
+import { Select } from '@/components/ui/Select'
 import type { Listing, ListingsResult, ListingsStats } from '@/lib/analytics/engine'
 import { formatPrice } from '@/lib/format'
 
@@ -103,32 +104,44 @@ export function ListingsSearch({ units, quota }: { units: UnitOption[]; quota: n
               ))}
             </select>
           </label>
-          <label className="text-sm">
+          <div className="text-sm">
             <span className="mb-1 block font-medium text-ink-700">Сегмент</span>
-            <select name="segment" className="geo-select">
-              <option value="">усі</option>
-              <option value="apartment">Квартири</option>
-              <option value="house">Будинки</option>
-              <option value="commercial">Комерція</option>
-              <option value="land">Земля</option>
-            </select>
-          </label>
-          <label className="text-sm">
+            <Select
+              name="segment"
+              defaultValue=""
+              options={[
+                { value: '', label: 'усі' },
+                { value: 'apartment', label: 'Квартири' },
+                { value: 'house', label: 'Будинки' },
+                { value: 'commercial', label: 'Комерція' },
+                { value: 'land', label: 'Земля' },
+              ]}
+            />
+          </div>
+          <div className="text-sm">
             <span className="mb-1 block font-medium text-ink-700">Операція</span>
-            <select name="operation" className="geo-select">
-              <option value="">усі</option>
-              <option value="sale">Продаж</option>
-              <option value="rent">Оренда</option>
-            </select>
-          </label>
-          <label className="text-sm">
+            <Select
+              name="operation"
+              defaultValue=""
+              options={[
+                { value: '', label: 'усі' },
+                { value: 'sale', label: 'Продаж' },
+                { value: 'rent', label: 'Оренда' },
+              ]}
+            />
+          </div>
+          <div className="text-sm">
             <span className="mb-1 block font-medium text-ink-700">Джерело</span>
-            <select name="source" defaultValue="domria" className="geo-select">
-              <option value="domria">DOM.RIA (реальні)</option>
-              <option value="prozorro">Prozorro (реальні)</option>
-              <option value="">усі джерела</option>
-            </select>
-          </label>
+            <Select
+              name="source"
+              defaultValue="domria"
+              options={[
+                { value: 'domria', label: 'DOM.RIA (реальні)' },
+                { value: 'prozorro', label: 'Prozorro (реальні)' },
+                { value: '', label: 'усі джерела' },
+              ]}
+            />
+          </div>
           <label className="text-sm">
             <span className="mb-1 block font-medium text-ink-700">Площа від/до</span>
             <div className="flex gap-2">

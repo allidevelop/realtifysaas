@@ -3,6 +3,7 @@ import crypto from 'crypto'
 import { DataBadge } from '@/components/account/DataBadge'
 import { Paywall } from '@/components/account/Paywall'
 import { Icon } from '@/components/Icon'
+import { Select } from '@/components/ui/Select'
 import { UnitCombobox } from '@/components/valuation/UnitCombobox'
 import { requireUser } from '@/lib/auth'
 import { resolveModuleAccess } from '@/lib/billing/entitlements'
@@ -78,22 +79,30 @@ function Form({
         <UnitCombobox units={units} name="adminUnitId" />
       </label>
       <div className="grid grid-cols-2 gap-3">
-        <label className="block text-sm">
+        <div className="block text-sm">
           <span className="mb-1 block font-medium text-ink-700">Сегмент</span>
-          <select name="segment" className="geo-select" defaultValue="apartment">
-            <option value="apartment">Вторинний ринок квартир</option>
-            <option value="house">Будинки / домоволодіння</option>
-            <option value="commercial">Комерційна нерухомість</option>
-            <option value="land">Земельні ділянки</option>
-          </select>
-        </label>
-        <label className="block text-sm">
+          <Select
+            name="segment"
+            defaultValue="apartment"
+            options={[
+              { value: 'apartment', label: 'Вторинний ринок квартир' },
+              { value: 'house', label: 'Будинки / домоволодіння' },
+              { value: 'commercial', label: 'Комерційна нерухомість' },
+              { value: 'land', label: 'Земельні ділянки' },
+            ]}
+          />
+        </div>
+        <div className="block text-sm">
           <span className="mb-1 block font-medium text-ink-700">Операція</span>
-          <select name="operation" className="geo-select" defaultValue="sale">
-            <option value="sale">Продаж</option>
-            <option value="rent">Оренда</option>
-          </select>
-        </label>
+          <Select
+            name="operation"
+            defaultValue="sale"
+            options={[
+              { value: 'sale', label: 'Продаж' },
+              { value: 'rent', label: 'Оренда' },
+            ]}
+          />
+        </div>
       </div>
       <button
         type="submit"
