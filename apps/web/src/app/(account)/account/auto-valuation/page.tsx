@@ -2,6 +2,7 @@ import { DataBadge } from '@/components/account/DataBadge'
 import { Paywall } from '@/components/account/Paywall'
 import { Icon } from '@/components/Icon'
 import { AutoValuationModule } from '@/components/valuation/AutoValuationModule'
+import { LibraryImport } from '@/components/valuation/LibraryImport'
 import { requireUser } from '@/lib/auth'
 import { resolveModuleAccess } from '@/lib/billing/entitlements'
 import { MODULE_META } from '@/lib/billing/modules'
@@ -29,7 +30,10 @@ export default async function AutoValuationPage() {
       </div>
 
       {access.allowed ? (
-        <AutoValuationModule quota={access.quotaRemaining ?? 0} />
+        <>
+          <AutoValuationModule quota={access.quotaRemaining ?? 0} />
+          <LibraryImport />
+        </>
       ) : (
         <Paywall moduleKey="auto-valuation" reason={access.reason} />
       )}
