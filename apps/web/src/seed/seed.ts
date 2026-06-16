@@ -203,6 +203,46 @@ export async function runSeed(payload: Payload): Promise<{ ok: true }> {
         log('создано пакетов портфельной оценки: 3')
       }
     }
+
+    // Инкрементально: пакеты «Автооцінка (звіт)» — повний звіт з PDF + аналоги.
+    if (moduleId['auto-valuation']) {
+      const have = await payload.find({
+        collection: 'service-plans',
+        where: { module: { equals: moduleId['auto-valuation'] } },
+        limit: 1,
+      })
+      if (have.totalDocs === 0) {
+        const lvl = ['min', 'mid', 'max'] as const
+        const packs: Array<[number, number]> = [[5, 2500], [10, 4500], [25, 9000]]
+        for (let i = 0; i < packs.length; i++) {
+          const [q, g] = packs[i]
+          await payload.create({
+            collection: 'service-plans',
+            data: {
+              name: `Автооцінка — ${q}`,
+              module: moduleId['auto-valuation'],
+              accessType: 'quota',
+              packLevel: lvl[i],
+              quota: q,
+              price: g,
+              priceMinor: g * 100,
+              currency: 'UAH',
+              billingPeriod: 'one-time',
+              highlighted: i === 1,
+              tagline: `${q} звітів`,
+              order: 110 + i,
+              isActive: true,
+              features: [
+                { label: `${q} повних звітів про оцінку` },
+                { label: 'PDF витяг → Word + Excel' },
+                { label: 'Автопідбір аналогів + скриншоти' },
+              ],
+            },
+          })
+        }
+        log('создано пакетов автооценки: 3')
+      }
+    }
   }
 
   // ── tools ──────────────────────────────────────────────────────

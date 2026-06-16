@@ -10,6 +10,7 @@ export const MODULE_KEYS = [
   'interactive-report',
   'appraiser-calculator',
   'portfolio-valuation',
+  'auto-valuation',
 ] as const
 
 export type ModuleKey = (typeof MODULE_KEYS)[number]
@@ -84,6 +85,14 @@ export const MODULE_META: Record<ModuleKey, ModuleMeta> = {
     accessType: 'quota',
     summary: 'Пакетна оцінка масиву об’єктів: завантаження переліку → автопідбір аналогів → вартість.',
     order: 7,
+  },
+  'auto-valuation': {
+    key: 'auto-valuation',
+    title: 'Автооцінка (звіт)',
+    icon: 'report',
+    accessType: 'quota',
+    summary: 'Завантажте PDF витяг/техпаспорт → система підбирає аналоги, заповнює Excel і генерує Word-звіт про оцінку.',
+    order: 8,
   },
 }
 

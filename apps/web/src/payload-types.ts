@@ -482,7 +482,8 @@ export interface Module {
     | 'report-generator'
     | 'interactive-report'
     | 'appraiser-calculator'
-    | 'portfolio-valuation';
+    | 'portfolio-valuation'
+    | 'auto-valuation';
   /**
    * URL-идентификатор. Заполняется автоматически из заголовка, можно изменить.
    */
