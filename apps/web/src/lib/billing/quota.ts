@@ -1,6 +1,6 @@
 import { getPayloadClient } from '@/lib/payload'
 
-import { type EntitlementSubject, resolveModuleAccess } from './entitlements'
+import { type EntitlementSubject, isAdminSubject, resolveModuleAccess } from './entitlements'
 import type { ModuleKey } from './modules'
 import { getRedis, quotaKey } from './redis'
 import type { ConsumeResult } from './types'
@@ -29,6 +29,10 @@ export async function consumeQuota(
   opts: ConsumeOptions = {},
 ): Promise<ConsumeResult> {
   const n = Math.max(1, opts.n ?? 1)
+  // Админ — безлимит: ничего не списываем.
+  if (isAdminSubject(user)) {
+    return { ok: true, remaining: Number.POSITIVE_INFINITY }
+  }
   const access = await resolveModuleAccess(user, moduleKey)
 
   if (access.accessType !== 'quota') {

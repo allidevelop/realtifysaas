@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 
 import { Select } from '@/components/ui/Select'
+import { quotaLabel } from '@/lib/format'
 
 interface Artifact {
   name: string
@@ -153,7 +154,7 @@ export function AutoValuationModule({ quota }: { quota: number }) {
           >
             {busy ? 'Запуск…' : running ? 'Виконується…' : 'Згенерувати звіт (−1 запит)'}
           </button>
-          <span className="text-xs text-ink-500">Залишок квоти: {quota}</span>
+          <span className="text-xs text-ink-500">Залишок квоти: {quotaLabel(quota)}</span>
         </div>
         {error && <p className="text-sm text-red-600">{error}</p>}
       </form>

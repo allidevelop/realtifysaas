@@ -3,7 +3,7 @@
 import { useActionState, useState } from 'react'
 
 import { runValuation, type ValuationState } from '@/app/(account)/account/valuation-actions'
-import { formatPrice } from '@/lib/format'
+import { formatPrice, quotaLabel } from '@/lib/format'
 
 import { UnitCombobox } from './UnitCombobox'
 
@@ -94,7 +94,7 @@ export function ValuationModule({ moduleKey, mode, units, quotaRemaining }: Prop
         >
           {pending ? 'Розрахунок…' : 'Оцінити (−1 запит)'}
         </button>
-        <p className="text-center text-xs text-ink-500">Залишок квоти: {quotaRemaining}</p>
+        <p className="text-center text-xs text-ink-500">Залишок квоти: {quotaLabel(quotaRemaining)}</p>
       </form>
 
       {/* Результат */}

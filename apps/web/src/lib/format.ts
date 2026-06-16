@@ -15,6 +15,11 @@ export function formatPrice(value: number, currency = 'UAH'): string {
 // Цена в формате «X тис.грн» (как у конкурента — крупное число + единица текстом,
 // чтобы цена воспринималась мягче). 12000 → {value:'12', unit:'тис.грн'};
 // 1100 → {value:'1,1'}; 0 → {value:'0'}. Только для гривны.
+// Остаток квоты: ∞ для безлимита (админ), иначе число.
+export function quotaLabel(value: number | null | undefined): string {
+  return value === Number.POSITIVE_INFINITY ? '∞' : String(value ?? 0)
+}
+
 export function formatThousands(uah: number): { value: string; unit: string } {
   const k = uah / 1000
   const value = Number.isInteger(k) ? String(k) : k.toFixed(1).replace('.', ',')

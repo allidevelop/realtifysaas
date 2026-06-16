@@ -3,7 +3,7 @@
 import { useActionState } from 'react'
 
 import { type BatchState, runBatch } from '@/app/(account)/account/portfolio-actions'
-import { formatPrice } from '@/lib/format'
+import { formatPrice, quotaLabel } from '@/lib/format'
 
 import { UnitCombobox } from './UnitCombobox'
 import type { UnitOption } from './ValuationModule'
@@ -64,7 +64,7 @@ export function PortfolioModule({ units, quota }: { units: UnitOption[]; quota: 
         >
           {pending ? 'Оцінювання…' : 'Оцінити портфель (−1 запит)'}
         </button>
-        <p className="text-center text-xs text-ink-500">Залишок квоти: {quota}</p>
+        <p className="text-center text-xs text-ink-500">Залишок квоти: {quotaLabel(quota)}</p>
       </form>
 
       <div className="rounded-2xl border border-ink-100 bg-white p-6">

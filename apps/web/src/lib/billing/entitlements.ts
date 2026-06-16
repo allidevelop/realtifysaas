@@ -8,13 +8,18 @@ import type { ModuleKey } from './modules'
 import type { ModuleAccess } from './types'
 
 // Субъект доступа: пользователь и (опц.) его организация — доступ может быть личным
-// или общим по организации (seats, ТЗ §8.2/§16 этап 6).
-export type EntitlementSubject = Pick<User, 'id' | 'organization'>
+// или общим по организации (seats, ТЗ §8.2/§16 этап 6). roles — для админ-байпаса.
+export type EntitlementSubject = Pick<User, 'id' | 'organization' | 'roles'>
 
 export function orgIdOf(user: EntitlementSubject): number | null {
   const o = user.organization
   if (o == null) return null
   return typeof o === 'object' ? o.id : o
+}
+
+// Админ — безлимитный доступ ко всем модулям (для тестирования и внутреннего использования).
+export function isAdminSubject(user: EntitlementSubject | null): boolean {
+  return Boolean(user?.roles?.includes('admin'))
 }
 
 // Загрузка модуля по ключу (с кэшем на процесс — каталог меняется редко).
@@ -92,6 +97,10 @@ export async function resolveModuleAccess(
 
   if (!user) {
     return { moduleKey, accessType, allowed: false, reason: 'unauthenticated' }
+  }
+  // Админ — безлимит на любой модуль (бесконечная квота).
+  if (isAdminSubject(user)) {
+    return { moduleKey, accessType, allowed: true, quotaRemaining: Number.POSITIVE_INFINITY }
   }
   if (accessType === 'free') {
     return { moduleKey, accessType, allowed: true }

@@ -4,7 +4,7 @@ import { useRef, useState } from 'react'
 
 import { Select } from '@/components/ui/Select'
 import type { Listing, ListingsResult, ListingsStats } from '@/lib/analytics/engine'
-import { formatPrice } from '@/lib/format'
+import { formatPrice, quotaLabel } from '@/lib/format'
 
 interface UnitOption {
   id: number
@@ -182,7 +182,7 @@ export function ListingsSearch({ units, quota }: { units: UnitOption[]; quota: n
           >
             CSV
           </button>
-          <span className="text-xs text-ink-500">Залишок квоти: {quota}</span>
+          <span className="text-xs text-ink-500">Залишок квоти: {quotaLabel(quota)}</span>
         </div>
       </form>
 

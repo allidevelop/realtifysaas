@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { Icon } from '@/components/Icon'
 import { requireUser } from '@/lib/auth'
 import { getModuleDashboard, type ModuleCard } from '@/lib/billing/cabinet'
-import { formatDate } from '@/lib/format'
+import { formatDate, quotaLabel } from '@/lib/format'
 
 export const dynamic = 'force-dynamic'
 
@@ -14,7 +14,7 @@ function statusBadge(card: ModuleCard) {
   }
   if (access.allowed) {
     if (access.accessType === 'quota') {
-      return { label: `Залишок: ${access.quotaRemaining}`, cls: 'bg-green-50 text-green-700' }
+      return { label: `Залишок: ${quotaLabel(access.quotaRemaining)}`, cls: 'bg-green-50 text-green-700' }
     }
     return { label: `Активно до ${formatDate(access.periodEnd)}`, cls: 'bg-green-50 text-green-700' }
   }

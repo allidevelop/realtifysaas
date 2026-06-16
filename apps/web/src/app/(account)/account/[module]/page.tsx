@@ -7,7 +7,7 @@ import { Icon } from '@/components/Icon'
 import { requireUser } from '@/lib/auth'
 import { resolveModuleAccess } from '@/lib/billing/entitlements'
 import { isModuleKey, MODULE_META } from '@/lib/billing/modules'
-import { formatDate } from '@/lib/format'
+import { formatDate, quotaLabel } from '@/lib/format'
 
 import { runModuleAction } from '@/app/(account)/billing-actions'
 
@@ -42,7 +42,7 @@ export default async function ModulePage({ params, searchParams }: Props) {
       {/* Сообщение о результате запуска */}
       {sp.ran && (
         <p className="mt-6 rounded-lg bg-green-50 px-4 py-3 text-sm text-green-700">
-          Розрахунок виконано. Залишок квоти: <b>{sp.remaining}</b>.
+          Розрахунок виконано. Залишок квоти: <b>{sp.remaining === 'Infinity' ? '∞' : sp.remaining}</b>.
         </p>
       )}
       {sp.error && (
@@ -89,7 +89,7 @@ async function AllowedView({
       {access.accessType === 'quota' && (
         <div>
           <p className="text-ink-700">
-            Залишок квоти: <b>{access.quotaRemaining}</b> запитів. Кожен запуск списує 1.
+            Залишок квоти: <b>{quotaLabel(access.quotaRemaining)}</b> запитів. Кожен запуск списує 1.
           </p>
           <form action={runModuleAction} className="mt-6">
             <input type="hidden" name="module" value={moduleKey} />

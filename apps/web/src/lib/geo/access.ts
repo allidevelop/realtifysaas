@@ -1,4 +1,4 @@
-import { type EntitlementSubject, getUserEntitlements } from '@/lib/billing/entitlements'
+import { type EntitlementSubject, getUserEntitlements, isAdminSubject } from '@/lib/billing/entitlements'
 
 import { engineGeo, type GeoMeta } from './engine'
 
@@ -16,7 +16,7 @@ export async function getGeoAccess(user: EntitlementSubject): Promise<GeoAccess>
     engineGeo<GeoMeta>('meta', {}),
     getUserEntitlements(user),
   ])
-  const full = entitlements.length > 0
+  const full = isAdminSubject(user) || entitlements.length > 0
   const allowedPeriods = full ? meta.periods : meta.periods.slice(-1)
   return { ...meta, usdRate: meta.usdRate ?? 41, allowedPeriods, canDrill: full, full }
 }

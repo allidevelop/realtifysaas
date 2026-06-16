@@ -5,6 +5,7 @@ import { Paywall } from '@/components/account/Paywall'
 import { Icon } from '@/components/Icon'
 import { Select } from '@/components/ui/Select'
 import { UnitCombobox } from '@/components/valuation/UnitCombobox'
+import { quotaLabel } from '@/lib/format'
 import { requireUser } from '@/lib/auth'
 import { resolveModuleAccess } from '@/lib/billing/entitlements'
 import { MODULE_META } from '@/lib/billing/modules'
@@ -110,7 +111,7 @@ function Form({
       >
         Згенерувати статистичний звіт (PDF, −1 запит)
       </button>
-      <p className="text-center text-xs text-ink-500">Залишок квоти: {quota}</p>
+      <p className="text-center text-xs text-ink-500">Залишок квоти: {quotaLabel(quota)}</p>
     </form>
   )
 }
