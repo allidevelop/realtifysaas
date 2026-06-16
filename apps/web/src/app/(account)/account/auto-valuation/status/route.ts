@@ -10,7 +10,7 @@ export async function GET(req: Request) {
   if (!user) return new Response('Unauthorized', { status: 401 })
 
   const jobId = new URL(req.url).searchParams.get('job') || ''
-  if (!/^[0-9_a-f]+$/i.test(jobId)) return Response.json({ error: 'bad job id' }, { status: 400 })
+  if (!/^[0-9a-z_]+$/i.test(jobId)) return Response.json({ error: 'bad job id' }, { status: 400 })
 
   let cookie: string
   try {

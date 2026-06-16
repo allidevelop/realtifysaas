@@ -12,7 +12,7 @@ export async function GET(req: Request) {
   const sp = new URL(req.url).searchParams
   const jobId = sp.get('job') || ''
   const name = sp.get('name') || ''
-  if (!/^[0-9_a-f]+$/i.test(jobId) || !/^[\w.\- ]+$/.test(name)) {
+  if (!/^[0-9a-z_]+$/i.test(jobId) || !/^[\w.\- ]+$/.test(name)) {
     return new Response('bad request', { status: 400 })
   }
 
