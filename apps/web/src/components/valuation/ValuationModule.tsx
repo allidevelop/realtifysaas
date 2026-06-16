@@ -1,6 +1,6 @@
 'use client'
 
-import { useActionState } from 'react'
+import { useActionState, useState } from 'react'
 
 import { runValuation, type ValuationState } from '@/app/(account)/account/valuation-actions'
 import { formatPrice } from '@/lib/format'
@@ -28,6 +28,8 @@ export function ValuationModule({ moduleKey, mode, units, quotaRemaining }: Prop
   const [state, action, pending] = useActionState<ValuationState, FormData>(runValuation, {})
   // Свежий runId на каждый рендер (идемпотентность двойного сабмита до завершения).
   const runId = uuid()
+  // Режим верификации (Калькулятор оцінювача): сверка заявленной стоимости с оценкой.
+  const [declared, setDeclared] = useState('')
 
   const r = state.result
   const ok = r && r.comparablesCount > 0
@@ -63,14 +65,26 @@ export function ValuationModule({ moduleKey, mode, units, quotaRemaining }: Prop
           <input name="area" type="number" min={1} step="0.1" required defaultValue={65} className="geo-select" />
         </Field>
         {mode === 'detailed' && (
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="Поверх">
-              <input name="floor" type="number" min={1} className="geo-select" />
+          <>
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="Поверх">
+                <input name="floor" type="number" min={1} className="geo-select" />
+              </Field>
+              <Field label="Поверхів усього">
+                <input name="totalFloors" type="number" min={1} className="geo-select" />
+              </Field>
+            </div>
+            <Field label="Заявлена вартість, грн (верифікація — опц.)">
+              <input
+                type="number"
+                min={0}
+                value={declared}
+                onChange={(e) => setDeclared(e.target.value)}
+                placeholder="напр. 2 500 000"
+                className="geo-select"
+              />
             </Field>
-            <Field label="Поверхів усього">
-              <input name="totalFloors" type="number" min={1} className="geo-select" />
-            </Field>
-          </div>
+          </>
         )}
 
         <button
@@ -120,6 +134,30 @@ export function ValuationModule({ moduleKey, mode, units, quotaRemaining }: Prop
                 </span>
               )}
             </div>
+
+            {mode === 'detailed' &&
+              (() => {
+                const dv = Number(declared)
+                if (!dv || dv <= 0 || !r.value) return null
+                const dev = (dv / r.value - 1) * 100
+                const within = Math.abs(dev) <= 10
+                const cls = within
+                  ? 'bg-emerald-50 text-emerald-700'
+                  : Math.abs(dev) <= 20
+                    ? 'bg-amber-50 text-amber-700'
+                    : 'bg-red-50 text-red-700'
+                const verdict = within ? 'Підтверджено' : dev > 0 ? 'Завищено' : 'Занижено'
+                return (
+                  <div className={`mt-5 rounded-lg px-4 py-3 text-sm ${cls}`}>
+                    <div className="font-semibold">Верифікація вартості: {verdict}</div>
+                    <div className="mt-1">
+                      Заявлено {formatPrice(dv, 'UAH')} проти оцінки {formatPrice(r.value, 'UAH')} —
+                      відхилення {dev >= 0 ? '+' : ''}
+                      {dev.toFixed(1)}%.
+                    </div>
+                  </div>
+                )
+              })()}
 
             {mode === 'detailed' && (
               <>

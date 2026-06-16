@@ -74,7 +74,7 @@ export const MODULE_META: Record<ModuleKey, ModuleMeta> = {
     title: 'Калькулятор оцінювача',
     icon: 'calc',
     accessType: 'quota',
-    summary: 'Автоматизированная оценка по нацстандартам, текущая и ретроспективная.',
+    summary: 'Оцінка за нацстандартами + верифікація заявленої вартості (поточна та ретроспективна).',
     order: 6,
   },
   'portfolio-valuation': {
