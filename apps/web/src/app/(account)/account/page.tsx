@@ -13,6 +13,9 @@ function statusBadge(card: ModuleCard) {
     return { label: 'Доступно', cls: 'bg-green-50 text-green-700' }
   }
   if (access.allowed) {
+    if (access.quotaRemaining === Number.POSITIVE_INFINITY) {
+      return { label: 'Доступ: ∞', cls: 'bg-green-50 text-green-700' }
+    }
     if (access.accessType === 'quota') {
       return { label: `Залишок: ${quotaLabel(access.quotaRemaining)}`, cls: 'bg-green-50 text-green-700' }
     }
