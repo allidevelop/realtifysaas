@@ -65,6 +65,14 @@ export function ModulesMenu() {
               {MODULE_META[key].title}
             </Link>
           ))}
+          <div className="my-1 border-t border-ink-100" />
+          <Link
+            href="/account/analog-database"
+            onClick={() => setOpen(false)}
+            className="block rounded-xl px-3 py-2 text-sm font-medium text-ink-700 hover:bg-brand-50 hover:text-brand-700"
+          >
+            База аналогів
+          </Link>
         </div>
       )}
     </div>
