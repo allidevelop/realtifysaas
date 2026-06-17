@@ -16,15 +16,14 @@ export async function POST(req: Request) {
   if ((access.quotaRemaining ?? 0) < 1) return Response.json({ error: 'quota' }, { status: 402 })
 
   const inForm = await req.formData()
-  const pdf = inForm.get('pdf_file')
-  const excel = inForm.get('excel_template')
-  if (!(pdf instanceof File) || !(excel instanceof File)) {
-    return Response.json({ error: 'PDF та Excel-шаблон обовʼязкові.' }, { status: 400 })
+  const pdfs = inForm.getAll('pdf_file').filter((p): p is File => p instanceof File && p.size > 0)
+  if (pdfs.length === 0) {
+    return Response.json({ error: 'Потрібен щонайменше один PDF.' }, { status: 400 })
   }
 
   const out = new FormData()
-  out.set('pdf_file', pdf, pdf.name || 'input.pdf')
-  out.set('excel_template', excel, excel.name || 'template.xls')
+  // Кілька PDF (витяг + техпаспорт окремими сканами) — autovalue зливає їх.
+  for (const pdf of pdfs) out.append('pdf_file', pdf, pdf.name || 'input.pdf')
   out.set('profile', String(inForm.get('profile') || 'apartment'))
   out.set('required_count', String(inForm.get('required_count') || '5'))
   const complex = String(inForm.get('complex_name') || '')
