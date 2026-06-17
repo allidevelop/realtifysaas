@@ -29,6 +29,13 @@ export async function POST(req: Request) {
   out.set('required_count', String(inForm.get('required_count') || '5'))
   const complex = String(inForm.get('complex_name') || '')
   if (complex) out.set('complex_name', complex)
+  // Примусовий пошук аналогів заново (ігнорувати базу) + опц. посилання на каталог ЖК
+  const forceResearch = inForm.get('force_research')
+  if (forceResearch === 'true' || forceResearch === 'on') {
+    out.set('force_research', 'true')
+    const searchUrl = String(inForm.get('search_url') || '').trim()
+    if (searchUrl) out.set('search_url', searchUrl)
+  }
   const fp = String(inForm.get('first_page') || '')
   const lp = String(inForm.get('last_page') || '')
   if (fp) out.set('first_page', fp)

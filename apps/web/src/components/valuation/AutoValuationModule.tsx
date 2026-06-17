@@ -52,6 +52,7 @@ export function AutoValuationModule({ quota }: { quota: number }) {
   const [job, setJob] = useState<JobStatus | null>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [forceResearch, setForceResearch] = useState(false)
 
   const done = !!job && ['passed', 'failed', 'cancelled'].includes(job.status)
 
@@ -136,6 +137,39 @@ export function AutoValuationModule({ quota }: { quota: number }) {
           <span className="mb-1 block font-medium text-ink-700">Назва ЖК / комплексу (необовʼязково)</span>
           <input name="complex_name" type="text" placeholder="ЖК Берег Дніпра" className="geo-select" />
         </label>
+        <div className="rounded-lg border border-ink-200 bg-ink-100/30 p-3">
+          <label className="flex cursor-pointer items-start gap-2.5 text-sm">
+            <input
+              type="checkbox"
+              name="force_research"
+              value="true"
+              checked={forceResearch}
+              onChange={(e) => setForceResearch(e.target.checked)}
+              className="mt-0.5 h-4 w-4 cursor-pointer accent-brand-600"
+            />
+            <span>
+              <span className="font-medium text-ink-800">Примусово шукати аналоги заново</span>
+              <span className="mt-0.5 block text-xs text-ink-500">
+                Не використовувати збережену базу — знайти свіжі аналоги того ж ЖК/будинку і оновити базу.
+              </span>
+            </span>
+          </label>
+          {forceResearch && (
+            <label className="mt-3 block text-sm">
+              <span className="mb-1 block font-medium text-ink-700">Посилання на каталог ЖК (рекомендовано)</span>
+              <input
+                name="search_url"
+                type="url"
+                placeholder="https://dom.ria.com/uk/prodazha-kvartir/… (або сторінка ЖК на rieltor/lun)"
+                className="geo-select"
+              />
+              <span className="mt-1 block text-xs text-ink-500">
+                Вставте сторінку дому/ЖК на dom.ria, rieltor чи lun — пошук буде точно в цьому будинку.
+                Без посилання система спробує знайти автоматично за адресою.
+              </span>
+            </label>
+          )}
+        </div>
         <div className="grid grid-cols-2 gap-3">
           <label className="block text-sm">
             <span className="mb-1 block font-medium text-ink-700">Сторінка PDF від</span>
