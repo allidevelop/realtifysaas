@@ -218,17 +218,34 @@ export function AnalogDatabase() {
                       <tbody>
                         {rows.map((it) => (
                           <tr key={it.id} className="border-t border-ink-100 align-top">
-                            {FIELDS.map((f) => (
-                              <td key={String(f.key)} className="px-1 py-1">
-                                <input
-                                  type={f.type === 'number' ? 'number' : 'text'}
-                                  readOnly={f.readonly}
-                                  value={(it[f.key] as string | number | null) ?? ''}
-                                  onChange={(e) => setField(g.address_key, it.id, f.key, e.target.value)}
-                                  className={`${f.width} rounded-md border border-ink-200 bg-white px-1.5 py-1 ${f.readonly ? 'bg-ink-100/50 text-ink-500' : ''}`}
-                                />
-                              </td>
-                            ))}
+                            {FIELDS.map((f) => {
+                              const url = typeof it.source_url === 'string' ? it.source_url : ''
+                              const isLink = f.key === 'source_url' && /^https?:\/\//i.test(url) && !url.includes('report.local')
+                              return (
+                                <td key={String(f.key)} className="px-1 py-1">
+                                  <div className="flex items-center gap-1">
+                                    <input
+                                      type={f.type === 'number' ? 'number' : 'text'}
+                                      readOnly={f.readonly}
+                                      value={(it[f.key] as string | number | null) ?? ''}
+                                      onChange={(e) => setField(g.address_key, it.id, f.key, e.target.value)}
+                                      className={`${f.width} rounded-md border border-ink-200 bg-white px-1.5 py-1 ${f.readonly ? 'bg-ink-100/50 text-ink-500' : ''}`}
+                                    />
+                                    {isLink && (
+                                      <a
+                                        href={url}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        title="Відкрити оголошення"
+                                        className="shrink-0 text-brand-600 hover:text-brand-700"
+                                      >
+                                        ↗
+                                      </a>
+                                    )}
+                                  </div>
+                                </td>
+                              )
+                            })}
                             <td className="px-1 py-1">
                               {it.screenshot_path ? (
                                 <a href={`${API}?type=screenshot&id=${it.id}`} target="_blank" rel="noreferrer" title="Відкрити скриншот">
