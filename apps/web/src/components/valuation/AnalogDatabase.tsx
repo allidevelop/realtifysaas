@@ -29,6 +29,7 @@ interface Item {
   delivery_date: string | null
   listing_date: string | null
   source_url: string | null
+  screenshot_path: string | null
   [key: string]: unknown
 }
 
@@ -210,6 +211,7 @@ export function AnalogDatabase() {
                           {FIELDS.map((f) => (
                             <th key={String(f.key)} className="px-1.5 py-1 font-medium">{f.label}</th>
                           ))}
+                          <th className="px-1.5 py-1 font-medium">Скрин</th>
                           <th className="px-1.5 py-1" />
                         </tr>
                       </thead>
@@ -227,6 +229,20 @@ export function AnalogDatabase() {
                                 />
                               </td>
                             ))}
+                            <td className="px-1 py-1">
+                              {it.screenshot_path ? (
+                                <a href={`${API}?type=screenshot&id=${it.id}`} target="_blank" rel="noreferrer" title="Відкрити скриншот">
+                                  <img
+                                    src={`${API}?type=screenshot&id=${it.id}`}
+                                    alt="скрин"
+                                    loading="lazy"
+                                    className="h-12 w-16 rounded border border-ink-200 object-cover object-top hover:opacity-80"
+                                  />
+                                </a>
+                              ) : (
+                                <span className="text-ink-300">—</span>
+                              )}
+                            </td>
                             <td className="whitespace-nowrap px-1 py-1">
                               <button
                                 onClick={() => save(g.address_key, it)}

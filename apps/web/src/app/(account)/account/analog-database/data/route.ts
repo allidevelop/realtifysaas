@@ -28,6 +28,20 @@ export async function GET(req: Request): Promise<Response> {
   if (url.searchParams.get('type') === 'groups') {
     return proxy('/api/analogs/groups')
   }
+  if (url.searchParams.get('type') === 'screenshot') {
+    const id = url.searchParams.get('id') || ''
+    const cookie = await autovalueLogin()
+    const res = await autovalueFetch(`/api/analogs/${encodeURIComponent(id)}/screenshot`, cookie)
+    if (!res.ok) return new Response('not found', { status: res.status })
+    const buf = await res.arrayBuffer()
+    return new Response(buf, {
+      status: 200,
+      headers: {
+        'content-type': res.headers.get('content-type') || 'image/png',
+        'cache-control': 'private, max-age=3600',
+      },
+    })
+  }
   const ak = url.searchParams.get('address_key') || ''
   return proxy(`/api/analogs?address_key=${encodeURIComponent(ak)}`)
 }
