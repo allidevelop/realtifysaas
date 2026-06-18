@@ -12,7 +12,7 @@ export default async function LoginPage({ searchParams }: SP) {
 
   return (
     <div className="mx-auto w-full max-w-md px-4 py-16">
-      <div className="rounded-2xl border border-ink-100 bg-white p-8 shadow-sm">
+      <div className="rounded-2xl border border-ink-100 bg-surface p-8 shadow-sm">
         <h1 className="text-2xl font-bold text-ink-900">Вхід до кабінету</h1>
         <p className="mt-1 text-sm text-ink-500">Доступ до інструментів за вашими пакетами.</p>
 

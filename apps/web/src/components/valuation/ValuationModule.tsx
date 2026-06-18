@@ -37,7 +37,7 @@ export function ValuationModule({ moduleKey, mode, units, quotaRemaining }: Prop
   return (
     <div className="mt-8 grid gap-6 lg:grid-cols-[360px_1fr]">
       {/* Форма */}
-      <form action={action} className="space-y-3 rounded-2xl border border-ink-100 bg-white p-6">
+      <form action={action} className="space-y-3 rounded-2xl border border-ink-100 bg-surface p-6">
         <input type="hidden" name="module" value={moduleKey} />
         <input type="hidden" name="mode" value={mode} />
         <input type="hidden" name="runId" value={runId} />
@@ -98,7 +98,7 @@ export function ValuationModule({ moduleKey, mode, units, quotaRemaining }: Prop
       </form>
 
       {/* Результат */}
-      <div className="rounded-2xl border border-ink-100 bg-white p-6">
+      <div className="rounded-2xl border border-ink-100 bg-surface p-6">
         {state.error && (
           <p className="rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-700">
             {state.error === 'quota-exhausted'

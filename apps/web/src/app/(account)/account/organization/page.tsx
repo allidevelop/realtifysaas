@@ -103,7 +103,7 @@ function OwnerView({ org }: { org: Organization }) {
 
   return (
     <>
-      <section className="mt-6 rounded-2xl border border-ink-100 bg-white p-6 shadow-sm">
+      <section className="mt-6 rounded-2xl border border-ink-100 bg-surface p-6 shadow-sm">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <h2 className="text-lg font-semibold text-ink-900">{org.name}</h2>
           <span className="text-sm text-ink-500">
@@ -120,7 +120,7 @@ function OwnerView({ org }: { org: Organization }) {
         </p>
       </section>
 
-      <section className="mt-6 rounded-2xl border border-ink-100 bg-white p-6 shadow-sm">
+      <section className="mt-6 rounded-2xl border border-ink-100 bg-surface p-6 shadow-sm">
         <h3 className="text-base font-semibold text-ink-900">Учасники</h3>
         <ul className="mt-3 divide-y divide-ink-100">
           {members.map((m) => (
@@ -182,7 +182,7 @@ function OwnerView({ org }: { org: Organization }) {
 // Участник (не владелец): только сведения.
 function MemberView({ org }: { org: Organization }) {
   return (
-    <section className="mt-6 rounded-2xl border border-ink-100 bg-white p-6 shadow-sm">
+    <section className="mt-6 rounded-2xl border border-ink-100 bg-surface p-6 shadow-sm">
       <h2 className="text-lg font-semibold text-ink-900">{org.name}</h2>
       <p className="mt-2 text-sm text-ink-500">
         Ви — учасник цієї організації. Спільні доступи організації застосовуються автоматично.
@@ -195,7 +195,7 @@ function MemberView({ org }: { org: Organization }) {
 // Нет организации: форма создания.
 function CreateView() {
   return (
-    <section className="mt-6 rounded-2xl border border-ink-100 bg-white p-6 shadow-sm">
+    <section className="mt-6 rounded-2xl border border-ink-100 bg-surface p-6 shadow-sm">
       <h2 className="text-lg font-semibold text-ink-900">Створити організацію</h2>
       <p className="mt-1 text-sm text-ink-500">
         Корпоративний акаунт дозволяє ділити куплені пакети між колегами (місця/seats).

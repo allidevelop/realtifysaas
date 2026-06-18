@@ -13,7 +13,7 @@ export async function PartnersBlock({ heading }: PartnersBlockType) {
       <div className="flex flex-wrap items-center justify-center gap-4">
         {partners.map((p) => {
           const chip = (
-            <span className="rounded-lg border border-ink-100 bg-white px-5 py-3 text-sm font-medium text-ink-700 shadow-sm">
+            <span className="rounded-lg border border-ink-100 bg-surface px-5 py-3 text-sm font-medium text-ink-700 shadow-sm">
               {p.name}
             </span>
           )

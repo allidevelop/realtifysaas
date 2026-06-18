@@ -17,7 +17,7 @@ export default async function RegisterPage({ searchParams }: SP) {
 
   return (
     <div className="mx-auto w-full max-w-md px-4 py-16">
-      <div className="rounded-2xl border border-ink-100 bg-white p-8 shadow-sm">
+      <div className="rounded-2xl border border-ink-100 bg-surface p-8 shadow-sm">
         <h1 className="text-2xl font-bold text-ink-900">Реєстрація</h1>
         <p className="mt-1 text-sm text-ink-500">Створіть акаунт, щоб купувати пакети модулів.</p>
 

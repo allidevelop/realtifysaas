@@ -1,6 +1,7 @@
 import Link from 'next/link'
 
 import { Container } from '@/components/Container'
+import { ThemeToggle } from '@/components/ThemeToggle'
 import { ButtonLink } from '@/components/ui/Button'
 import { getSiteSettings } from '@/lib/queries'
 
@@ -21,7 +22,7 @@ export async function Header() {
       : FALLBACK_NAV
 
   return (
-    <header className="sticky top-0 z-40 border-b border-ink-100 bg-white/90 backdrop-blur">
+    <header className="sticky top-0 z-40 border-b border-ink-100 bg-surface/90 backdrop-blur">
       <Container className="flex h-16 items-center justify-between gap-6">
         <Link href="/" className="flex items-center gap-2 text-lg font-bold text-ink-900">
           <span className="grid h-8 w-8 place-items-center rounded-md bg-brand-600 text-white">
@@ -43,6 +44,7 @@ export async function Header() {
         </nav>
 
         <div className="flex items-center gap-3">
+          <ThemeToggle />
           <Link
             href="/account/login"
             className="hidden text-sm font-medium text-ink-700 hover:text-brand-700 sm:inline"

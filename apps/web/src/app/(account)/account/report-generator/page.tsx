@@ -61,7 +61,7 @@ function Form({
     <form
       action="/account/report-generator/generate"
       method="POST"
-      className="space-y-3 rounded-2xl border border-ink-100 bg-white p-6"
+      className="space-y-3 rounded-2xl border border-ink-100 bg-surface p-6"
     >
       <input type="hidden" name="runId" value={runId} />
       {error && (

@@ -6,7 +6,7 @@ import { ButtonLink } from '@/components/ui/Button'
 export function HeroBlock(props: HeroBlockType) {
   const { heading, subheading, ctaLabel, ctaHref, secondaryLabel, secondaryHref } = props
   return (
-    <section className="relative overflow-hidden border-b border-ink-100 bg-gradient-to-b from-brand-50 to-white">
+    <section className="relative overflow-hidden border-b border-ink-100 bg-gradient-to-b from-brand-50 to-paper">
       <Container className="py-20 sm:py-28">
         <div className="mx-auto max-w-3xl text-center">
           <h1 className="text-4xl font-bold tracking-tight text-ink-900 sm:text-5xl">{heading}</h1>

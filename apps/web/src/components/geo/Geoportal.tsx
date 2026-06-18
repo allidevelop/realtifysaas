@@ -236,7 +236,7 @@ export function Geoportal({ access }: { access: GeoAccess }) {
   return (
     <div className="flex flex-col gap-4 lg:flex-row">
       {/* Панель фильтров */}
-      <aside className="w-full shrink-0 space-y-3 rounded-2xl border border-ink-100 bg-white p-4 lg:w-72">
+      <aside className="w-full shrink-0 space-y-3 rounded-2xl border border-ink-100 bg-surface p-4 lg:w-72">
         {/* Язык интерфейса */}
         <div className="flex items-center justify-end gap-1 text-xs">
           {(['uk', 'en'] as Lang[]).map((l) => (
@@ -262,7 +262,7 @@ export function Geoportal({ access }: { access: GeoAccess }) {
               className="geo-select w-full"
             />
             {results.length > 0 && (
-              <ul className="absolute z-[1000] mt-1 max-h-60 w-full overflow-auto rounded-lg border border-ink-100 bg-white shadow-lg">
+              <ul className="absolute z-[1000] mt-1 max-h-60 w-full overflow-auto rounded-lg border border-ink-100 bg-surface shadow-lg">
                 {results.map((it) => (
                   <li key={it.id}>
                     <button
@@ -376,7 +376,7 @@ export function Geoportal({ access }: { access: GeoAccess }) {
       </aside>
 
       {/* Карта — на весь доступный экран */}
-      <div className="h-[calc(100vh-11rem)] min-h-[520px] w-full overflow-hidden rounded-2xl border border-ink-100 bg-white">
+      <div className="h-[calc(100vh-11rem)] min-h-[520px] w-full overflow-hidden rounded-2xl border border-ink-100 bg-surface">
         {geojson && geojson.features.length > 0 ? (
           <PriceMap
             geojson={geojson}

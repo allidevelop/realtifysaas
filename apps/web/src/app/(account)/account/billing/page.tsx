@@ -82,7 +82,7 @@ export default async function BillingPage({
         {entitlements.length === 0 ? (
           <p className="mt-2 text-sm text-ink-500">Активних доступів немає. Придбайте пакет нижче.</p>
         ) : (
-          <div className="mt-3 overflow-hidden rounded-xl border border-ink-100 bg-white">
+          <div className="mt-3 overflow-hidden rounded-xl border border-ink-100 bg-surface">
             <table className="w-full text-sm">
               <thead className="bg-ink-100/40 text-left text-ink-500">
                 <tr>
@@ -148,7 +148,7 @@ export default async function BillingPage({
         {orders.length === 0 ? (
           <p className="mt-2 text-sm text-ink-500">Замовлень ще немає.</p>
         ) : (
-          <div className="mt-3 overflow-hidden rounded-xl border border-ink-100 bg-white">
+          <div className="mt-3 overflow-hidden rounded-xl border border-ink-100 bg-surface">
             <table className="w-full text-sm">
               <thead className="bg-ink-100/40 text-left text-ink-500">
                 <tr>
@@ -206,7 +206,7 @@ export default async function BillingPage({
       </section>
 
       {/* Безнал для юрлиц */}
-      <section className="mt-12 rounded-2xl border border-ink-100 bg-white p-6">
+      <section className="mt-12 rounded-2xl border border-ink-100 bg-surface p-6">
         <h2 className="text-lg font-semibold text-ink-900">Оплата за рахунком (юрособи, банки)</h2>
         <p className="mt-1 text-sm text-ink-500">
           Оформте замовлення з реквізитами — згенеруємо рахунок-фактуру (PDF), після оплати —

@@ -80,7 +80,7 @@ export function Dashboard({ units }: { units: UnitOption[] }) {
 
   return (
     <div className="mt-6 space-y-6">
-      <div className="flex flex-wrap gap-3 rounded-2xl border border-ink-100 bg-white p-4">
+      <div className="flex flex-wrap gap-3 rounded-2xl border border-ink-100 bg-surface p-4">
         <label className="text-sm">
           <span className="mb-1 block font-medium text-ink-700">Територіальна одиниця</span>
           <select value={adminUnitId} onChange={(e) => setAdminUnitId(e.target.value)} className="geo-select">
@@ -109,7 +109,7 @@ export function Dashboard({ units }: { units: UnitOption[] }) {
           const d = data[m.key]
           if (!d || !d.trend?.length || !d.segments?.length) return null
           return (
-            <div key={m.key} className="rounded-2xl border border-ink-100 bg-white p-5">
+            <div key={m.key} className="rounded-2xl border border-ink-100 bg-surface p-5">
               <h3 className="mb-3 text-sm font-semibold text-ink-900">{m.title}</h3>
               <ResponsiveContainer width="100%" height={240}>
                 <LineChart data={d.trend} margin={{ left: 4, right: 8, top: 8 }}>
@@ -137,7 +137,7 @@ export function Dashboard({ units }: { units: UnitOption[] }) {
       </div>
 
       {price && price.bySegment?.length > 0 && (
-        <div className="rounded-2xl border border-ink-100 bg-white p-5">
+        <div className="rounded-2xl border border-ink-100 bg-surface p-5">
           <h3 className="mb-3 text-sm font-semibold text-ink-900">
             Ціна за м² за сегментами{price.latest ? ` (${price.latest})` : ''}
           </h3>

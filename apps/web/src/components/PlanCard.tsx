@@ -10,7 +10,7 @@ export function PlanCard({ plan }: { plan: ServicePlan }) {
   return (
     <div
       className={cn(
-        'flex flex-col rounded-2xl border bg-white p-7 shadow-sm',
+        'flex flex-col rounded-2xl border bg-surface p-7 shadow-sm',
         highlighted ? 'border-brand-500 ring-1 ring-brand-500' : 'border-ink-100',
       )}
     >

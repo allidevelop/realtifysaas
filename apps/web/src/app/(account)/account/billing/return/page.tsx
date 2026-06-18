@@ -35,7 +35,7 @@ export default async function BillingReturnPage({ searchParams }: Props) {
 
   return (
     <div className="mx-auto w-full max-w-md px-4 py-16 text-center">
-      <div className="rounded-2xl border border-ink-100 bg-white p-8 shadow-sm">
+      <div className="rounded-2xl border border-ink-100 bg-surface p-8 shadow-sm">
         <h1 className={`text-2xl font-bold ${view.cls}`}>{view.title}</h1>
         <p className="mt-2 text-sm text-ink-500">{view.note}</p>
         <Link

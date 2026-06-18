@@ -30,7 +30,7 @@ export default async function MockPayPage({ params }: Props) {
 
   return (
     <div className="mx-auto w-full max-w-md px-4 py-16">
-      <div className="rounded-2xl border border-ink-100 bg-white p-8 shadow-sm">
+      <div className="rounded-2xl border border-ink-100 bg-surface p-8 shadow-sm">
         <div className="text-xs font-medium uppercase tracking-wide text-ink-500">
           Демо-оплата (mock)
         </div>

@@ -22,7 +22,7 @@ export async function TeamBlock({ heading, intro }: TeamBlockType) {
         {team.map((m) => (
           <div
             key={m.id}
-            className="rounded-xl border border-ink-100 bg-white p-6 text-center shadow-sm"
+            className="rounded-xl border border-ink-100 bg-surface p-6 text-center shadow-sm"
           >
             <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-brand-50 text-xl font-semibold text-brand-700">
               {initials(m.name)}

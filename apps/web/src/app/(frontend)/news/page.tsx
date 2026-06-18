@@ -29,7 +29,7 @@ export default async function NewsListPage() {
             <Link
               key={item.id}
               href={`/news/${item.slug}`}
-              className="group rounded-xl border border-ink-100 bg-white p-6 shadow-sm transition-shadow hover:shadow-md"
+              className="group rounded-xl border border-ink-100 bg-surface p-6 shadow-sm transition-shadow hover:shadow-md"
             >
               {item.publishedAt && (
                 <time className="text-xs uppercase tracking-wide text-ink-500">

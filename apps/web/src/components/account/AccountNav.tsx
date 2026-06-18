@@ -1,6 +1,7 @@
 import Link from 'next/link'
 
 import { ModulesMenu } from '@/components/account/ModulesMenu'
+import { ThemeToggle } from '@/components/ThemeToggle'
 import { logoutAction } from '@/app/(account)/actions'
 import type { User } from '@/payload-types'
 
@@ -44,6 +45,7 @@ export function AccountNav({ user }: { user: User | null }) {
         )}
 
         <div className="flex items-center gap-3">
+          <ThemeToggle />
           {user ? (
             <>
               <Link

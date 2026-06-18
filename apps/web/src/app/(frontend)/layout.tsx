@@ -5,6 +5,7 @@ import { Footer } from '@/components/Footer'
 import { Header } from '@/components/Header'
 import { SITE_NAME, SITE_URL } from '@/lib/constants'
 import { fontClass } from '@/lib/fonts'
+import { THEME_INIT } from '@/lib/theme'
 
 import './globals.css'
 
@@ -20,8 +21,9 @@ export const metadata: Metadata = {
 
 export default function FrontendLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="uk" className={fontClass}>
+    <html lang="uk" className={fontClass} suppressHydrationWarning>
       <body className="flex min-h-screen flex-col bg-paper text-ink-900 antialiased">
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT }} />
         <Header />
         <main className="flex-1">{children}</main>
         <Footer />

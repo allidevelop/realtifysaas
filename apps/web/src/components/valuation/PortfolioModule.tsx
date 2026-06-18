@@ -19,7 +19,7 @@ export function PortfolioModule({ units, quota }: { units: UnitOption[]; quota: 
 
   return (
     <div className="mt-8 grid gap-6 lg:grid-cols-[380px_1fr]">
-      <form action={action} className="space-y-3 rounded-2xl border border-ink-100 bg-white p-6">
+      <form action={action} className="space-y-3 rounded-2xl border border-ink-100 bg-surface p-6">
         <input type="hidden" name="runId" value={runId} />
         <p className="rounded-lg bg-ink-100/40 px-3 py-2 text-xs text-ink-600">
           Пакетна оцінка масиву об’єктів однією вибіркою. Введіть перелік (по рядку на об’єкт):
@@ -67,7 +67,7 @@ export function PortfolioModule({ units, quota }: { units: UnitOption[]; quota: 
         <p className="text-center text-xs text-ink-500">Залишок квоти: {quotaLabel(quota)}</p>
       </form>
 
-      <div className="rounded-2xl border border-ink-100 bg-white p-6">
+      <div className="rounded-2xl border border-ink-100 bg-surface p-6">
         {state.error && (
           <p className="rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-700">
             {state.error === 'quota'

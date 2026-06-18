@@ -1,6 +1,9 @@
 @import 'tailwindcss';
 @plugin '@tailwindcss/typography';
 
+/* Темна тема — клас .dark на <html> (перемикач + no-flash скрипт у layout). */
+@custom-variant dark (&:where(.dark, .dark *));
+
 /* ───────────────────────────────────────────────────────────────────────────
    Дизайн-система Realtify — proptech-оцінка: тепла «paper & ink» нейтраль +
    глибокий смарагдовий акцент (гроші/нерухомість, не дефолтний синій). Шрифти:
@@ -181,4 +184,43 @@
 .leaflet-container {
   z-index: 0;
   background-color: var(--color-ink-100);
+}
+
+/* ───────────────────────────────────────────────────────────────────────────
+   ТЕМНА ТЕМА. Перевизначаємо ті самі семантичні токени — усі компоненти, що
+   використовують bg-surface / text-ink-* / bg-paper / border-ink-* тощо,
+   адаптуються автоматично. Тепла «paper & ink» паліра, інвертована в темну.
+   ─────────────────────────────────────────────────────────────────────────── */
+.dark {
+  color-scheme: dark;
+
+  /* Поверхні */
+  --color-paper: #1a1613; /* тло сторінки — тепле near-black */
+  --color-surface: #221e1b; /* картки/поля — крок світліше */
+
+  /* Нейтраль — інвертована тепла «stone» */
+  --color-ink-900: #f4f1ec; /* основний текст */
+  --color-ink-800: #e6e1da;
+  --color-ink-700: #d0cac3;
+  --color-ink-600: #b9b2aa; /* (на випадок використання) */
+  --color-ink-500: #a39c93; /* приглушений текст */
+  --color-ink-400: #837b72; /* плейсхолдери/дрібне */
+  --color-ink-300: #4e4842; /* помітні бордюри */
+  --color-ink-200: #3a342f; /* тонкі дільники/бордюри */
+  --color-ink-100: #2b2622; /* тонке тло/hover */
+
+  /* Світлі тінти бренду — у темні зелені підкладки */
+  --color-brand-50: #102a1e;
+  --color-brand-100: #163b2a;
+
+  /* Глибші тіні на темному тлі */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.45);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.45), 0 2px 4px rgba(0, 0, 0, 0.38);
+  --shadow-md: 0 6px 16px -4px rgba(0, 0, 0, 0.55), 0 2px 6px -2px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 16px 40px -12px rgba(0, 0, 0, 0.65), 0 6px 16px -6px rgba(0, 0, 0, 0.45);
+}
+
+/* Темний chevron для нативних select у темній темі */
+.dark select.geo-select {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%23837b72'><path fill-rule='evenodd' d='M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.17l3.71-3.94a.75.75 0 1 1 1.08 1.04l-4.25 4.5a.75.75 0 0 1-1.08 0l-4.25-4.5a.75.75 0 0 1 .02-1.06Z' clip-rule='evenodd'/></svg>");
 }

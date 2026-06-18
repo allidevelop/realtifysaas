@@ -7,7 +7,7 @@ export function ToolCard({ tool }: { tool: Tool }) {
   return (
     <Link
       href={`/tools/${tool.slug}`}
-      className="group flex flex-col rounded-xl border border-ink-100 bg-white p-6 shadow-sm transition-shadow hover:shadow-md"
+      className="group flex flex-col rounded-xl border border-ink-100 bg-surface p-6 shadow-sm transition-shadow hover:shadow-md"
     >
       <div className="mb-4 grid h-11 w-11 place-items-center rounded-lg bg-brand-50 text-brand-600">
         <Icon name={(tool.icon ?? 'spark') as IconName} className="h-6 w-6" />

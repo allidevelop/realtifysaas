@@ -86,7 +86,7 @@ export function ListingsSearch({ units, quota }: { units: UnitOption[]; quota: n
         ref={formRef}
         action="/account/arm-analytics/export"
         method="POST"
-        className="space-y-3 rounded-2xl border border-ink-100 bg-white p-5"
+        className="space-y-3 rounded-2xl border border-ink-100 bg-surface p-5"
       >
         <input type="hidden" name="runId" value={uuid()} />
         <input type="hidden" name="sort" value={sort} />
@@ -199,7 +199,7 @@ export function ListingsSearch({ units, quota }: { units: UnitOption[]; quota: n
           <p className="mb-2 text-sm text-ink-500">
             Знайдено: {total} (показано {items.length}). Натисніть на заголовок стовпця для сортування.
           </p>
-          <div className="overflow-x-auto rounded-xl border border-ink-100 bg-white">
+          <div className="overflow-x-auto rounded-xl border border-ink-100 bg-surface">
             <table className="w-full text-sm">
               <thead className="bg-ink-100/40 text-left text-ink-500">
                 <tr>
@@ -272,7 +272,7 @@ export function ListingsSearch({ units, quota }: { units: UnitOption[]; quota: n
 
 function StatCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-xl border border-ink-100 bg-white p-3">
+    <div className="rounded-xl border border-ink-100 bg-surface p-3">
       <div className="text-xs text-ink-500">{label}</div>
       <div className="mt-0.5 text-base font-semibold text-ink-900">{value}</div>
     </div>

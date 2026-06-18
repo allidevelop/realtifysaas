@@ -101,7 +101,7 @@ export function UnitCombobox({
         <ul
           id={listId}
           role="listbox"
-          className="absolute z-50 mt-1 max-h-72 w-full overflow-auto rounded-lg border border-ink-100 bg-white py-1 shadow-lg"
+          className="absolute z-50 mt-1 max-h-72 w-full overflow-auto rounded-lg border border-ink-100 bg-surface py-1 shadow-lg"
         >
           {filtered.length === 0 && (
             <li className="px-3 py-2 text-sm text-ink-400">Нічого не знайдено</li>

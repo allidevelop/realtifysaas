@@ -12,7 +12,7 @@ export function FeatureGridBlock({ heading, intro, features }: FeatureGridBlockT
         {features.map((f) => (
           <div
             key={f.id ?? f.title}
-            className="rounded-xl border border-ink-100 bg-white p-6 shadow-sm"
+            className="rounded-xl border border-ink-100 bg-surface p-6 shadow-sm"
           >
             <div className="mb-4 grid h-11 w-11 place-items-center rounded-lg bg-brand-50 text-brand-600">
               <Icon name={(f.icon ?? 'spark') as IconName} className="h-6 w-6" />

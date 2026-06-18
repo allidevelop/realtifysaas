@@ -11,7 +11,7 @@ export function StatsBlock({ heading, items }: StatsBlockType) {
         {items.map((item) => (
           <div
             key={item.id ?? item.label}
-            className="rounded-xl border border-ink-100 bg-white p-6 text-center shadow-sm"
+            className="rounded-xl border border-ink-100 bg-surface p-6 text-center shadow-sm"
           >
             <dt className="text-3xl font-bold text-brand-600">{item.value}</dt>
             <dd className="mt-1 text-sm text-ink-500">{item.label}</dd>

@@ -304,7 +304,7 @@ export function AnalogDatabase() {
                                       readOnly={f.readonly}
                                       value={(it[f.key] as string | number | null) ?? ''}
                                       onChange={(e) => setField(g.address_key, it.id, f.key, e.target.value)}
-                                      className={`${f.width} rounded-md border border-ink-200 bg-white px-1.5 py-1 ${f.readonly ? 'bg-ink-100/50 text-ink-500' : ''}`}
+                                      className={`${f.width} rounded-md border border-ink-200 bg-surface px-1.5 py-1 ${f.readonly ? 'bg-ink-100/50 text-ink-500' : ''}`}
                                     />
                                     {isLink && (
                                       <a
