@@ -49,6 +49,31 @@ export async function GET(req: Request): Promise<Response> {
 export async function POST(req: Request): Promise<Response> {
   const gate = await ensureUser()
   if (gate) return gate
+  const url = new URL(req.url)
+  const type = url.searchParams.get('type')
+
+  if (type === 'screenshot') {
+    const id = url.searchParams.get('id')
+    if (!id) return new Response(JSON.stringify({ error: 'id required' }), { status: 400 })
+    const inForm = await req.formData()
+    const file = inForm.get('file')
+    if (!(file instanceof Blob)) return new Response(JSON.stringify({ error: 'file required' }), { status: 400 })
+    const out = new FormData()
+    out.append('file', file, (file as File).name || 'screenshot.png')
+    const cookie = await autovalueLogin()
+    const res = await autovalueFetch(`/api/analogs/${encodeURIComponent(id)}/screenshot`, cookie, {
+      method: 'POST',
+      body: out,
+    })
+    const text = await res.text()
+    return new Response(text, { status: res.status, headers: { 'content-type': 'application/json; charset=utf-8' } })
+  }
+
+  if (type === 'from-url') {
+    const body = await req.text()
+    return proxy('/api/analogs/from-url', { method: 'POST', body, headers: { 'content-type': 'application/json' } })
+  }
+
   const body = await req.text()
   return proxy('/api/analogs', {
     method: 'POST',

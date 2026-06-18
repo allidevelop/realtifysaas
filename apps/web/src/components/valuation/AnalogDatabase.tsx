@@ -55,6 +55,8 @@ export function AnalogDatabase() {
   const [busy, setBusy] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [query, setQuery] = useState('')
+  const [urlInput, setUrlInput] = useState('')
+  const [urlMsg, setUrlMsg] = useState<string | null>(null)
 
   useEffect(() => {
     void loadGroups()
@@ -152,6 +154,60 @@ export function AnalogDatabase() {
     }
   }
 
+  async function uploadShot(key: string, id: number, file: File | undefined) {
+    if (!file) return
+    setBusy(`shot-${id}`)
+    setError(null)
+    try {
+      const fd = new FormData()
+      fd.append('file', file)
+      const r = await fetch(`${API}?type=screenshot&id=${id}`, { method: 'POST', body: fd })
+      const d = await r.json()
+      if (d.item) {
+        setItems((m) => ({ ...m, [key]: (m[key] ?? []).map((it) => (it.id === id ? d.item : it)) }))
+      } else {
+        setError('Не вдалося завантажити скрин.')
+      }
+    } catch {
+      setError('Помилка завантаження скрину.')
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  async function addByUrl() {
+    const u = urlInput.trim()
+    if (!u) return
+    setBusy('add-url')
+    setUrlMsg('Збираю дані з оголошення… (10–30 с)')
+    setError(null)
+    try {
+      const r = await fetch(`${API}?type=from-url`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ url: u }),
+      })
+      const d = await r.json()
+      if (d.item) {
+        setUrlInput('')
+        setUrlMsg(`Додано: ${d.item.address || d.item.source_url || 'аналог'}`)
+        await loadGroups()
+        if (d.item.address_key) {
+          setOpen(d.item.address_key)
+          await loadItems(d.item.address_key)
+        }
+      } else {
+        setUrlMsg(null)
+        setError(d.detail || d.error || 'Не вдалося зібрати дані з посилання.')
+      }
+    } catch {
+      setUrlMsg(null)
+      setError('Помилка збору з посилання.')
+    } finally {
+      setBusy(null)
+    }
+  }
+
   const visible = (groups ?? []).filter((g) => {
     if (!query.trim()) return true
     const q = query.toLowerCase()
@@ -171,6 +227,25 @@ export function AnalogDatabase() {
           {groups ? `${groups.length} адрес / ЖК` : 'Завантаження…'}
         </span>
       </div>
+
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        <input
+          value={urlInput}
+          onChange={(e) => setUrlInput(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter') void addByUrl() }}
+          placeholder="Додати аналог за посиланням (rieltor / dom.ria / olx)…"
+          className="geo-select min-w-0 flex-1"
+        />
+        <button
+          onClick={() => void addByUrl()}
+          disabled={busy === 'add-url' || !urlInput.trim()}
+          className="shrink-0 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50"
+        >
+          {busy === 'add-url' ? 'Збираю…' : 'Додати за посиланням'}
+        </button>
+        {urlMsg && <span className="text-sm text-ink-500">{urlMsg}</span>}
+      </div>
+
       {error && <p className="mb-3 text-sm text-red-600">{error}</p>}
 
       {groups && groups.length === 0 && (
@@ -247,18 +322,36 @@ export function AnalogDatabase() {
                               )
                             })}
                             <td className="px-1 py-1">
-                              {it.screenshot_path ? (
-                                <a href={`${API}?type=screenshot&id=${it.id}`} target="_blank" rel="noreferrer" title="Відкрити скриншот">
-                                  <img
-                                    src={`${API}?type=screenshot&id=${it.id}`}
-                                    alt="скрин"
-                                    loading="lazy"
-                                    className="h-12 w-16 rounded border border-ink-200 object-cover object-top hover:opacity-80"
+                              <div className="flex flex-col items-start gap-1">
+                                {it.screenshot_path ? (
+                                  <a
+                                    href={`${API}?type=screenshot&id=${it.id}&v=${encodeURIComponent(String(it.updated_at ?? ''))}`}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    title="Відкрити скриншот"
+                                  >
+                                    <img
+                                      src={`${API}?type=screenshot&id=${it.id}&v=${encodeURIComponent(String(it.updated_at ?? ''))}`}
+                                      alt="скрин"
+                                      loading="lazy"
+                                      className="h-12 w-16 rounded border border-ink-200 object-cover object-top hover:opacity-80"
+                                    />
+                                  </a>
+                                ) : (
+                                  <span className="text-ink-300">—</span>
+                                )}
+                                <label
+                                  className={`cursor-pointer text-[10px] text-brand-600 hover:underline ${busy === `shot-${it.id}` ? 'opacity-50' : ''}`}
+                                >
+                                  {busy === `shot-${it.id}` ? '…' : it.screenshot_path ? 'Замінити' : '+ Скрин'}
+                                  <input
+                                    type="file"
+                                    accept="image/*"
+                                    className="hidden"
+                                    onChange={(e) => uploadShot(g.address_key, it.id, e.target.files?.[0])}
                                   />
-                                </a>
-                              ) : (
-                                <span className="text-ink-300">—</span>
-                              )}
+                                </label>
+                              </div>
                             </td>
                             <td className="whitespace-nowrap px-1 py-1">
                               <button
