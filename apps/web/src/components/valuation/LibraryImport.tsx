@@ -16,7 +16,7 @@ const STATUS_LABEL: Record<string, string> = {
   failed: 'помилка',
 }
 
-export function LibraryImport() {
+export function LibraryImport({ onDone }: { onDone?: () => void }) {
   const formRef = useRef<HTMLFormElement>(null)
   const [jobId, setJobId] = useState<string | null>(null)
   const [job, setJob] = useState<JobStatus | null>(null)
@@ -31,7 +31,7 @@ export function LibraryImport() {
     let stop = false
     const tick = async () => {
       try {
-        const r = await fetch(`/account/auto-valuation/status?job=${jobId}`)
+        const r = await fetch(`/account/analog-database/data?type=job-status&id=${jobId}`)
         if (r.ok) {
           const d = (await r.json()) as JobStatus
           if (!stop) setJob(d)
@@ -48,6 +48,12 @@ export function LibraryImport() {
     }
   }, [jobId, done])
 
+  // Після успішного імпорту — оновити список груп у базі.
+  useEffect(() => {
+    if (job?.status === 'passed') onDone?.()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [job?.status])
+
   async function submit(e: React.FormEvent) {
     e.preventDefault()
     if (!formRef.current) return
@@ -57,7 +63,7 @@ export function LibraryImport() {
     setJobId(null)
     try {
       const fd = new FormData(formRef.current)
-      const r = await fetch('/account/auto-valuation/library', { method: 'POST', body: fd })
+      const r = await fetch('/account/analog-database/data?type=import-library', { method: 'POST', body: fd })
       const d = await r.json()
       if (!r.ok) {
         setError(d.error || 'Помилка імпорту.')
@@ -79,10 +85,10 @@ export function LibraryImport() {
         className="flex w-full items-center justify-between text-left"
       >
         <span>
-          <span className="text-base font-semibold text-ink-900">Бібліотека перевірених аналогів</span>
+          <span className="text-base font-semibold text-ink-900">Масовий імпорт аналогів (CSV / Excel)</span>
           <span className="mt-0.5 block text-sm text-ink-500">
-            Завантажте файл «адреса → посилання на аналоги» — система збере й збереже їх; майбутні
-            оцінки цього будинку братимуть аналоги звідси, без пошуку.
+            Масовий імпорт: завантажте файл «адреса → посилання на аналоги» — система збере дані
+            й скриншоти та додасть їх у цю базу. Зручно завести багато аналогів разом.
           </span>
         </span>
         <svg

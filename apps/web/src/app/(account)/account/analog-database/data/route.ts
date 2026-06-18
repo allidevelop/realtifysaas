@@ -42,6 +42,18 @@ export async function GET(req: Request): Promise<Response> {
       },
     })
   }
+  if (url.searchParams.get('type') === 'job-status') {
+    const id = url.searchParams.get('id') || ''
+    if (!/^[0-9a-z_]+$/i.test(id)) return new Response(JSON.stringify({ error: 'bad job id' }), { status: 400 })
+    const cookie = await autovalueLogin()
+    const res = await autovalueFetch(`/api/jobs/${id}`, cookie)
+    if (!res.ok) return new Response(JSON.stringify({ error: 'not-found' }), { status: res.status })
+    const job = await res.json()
+    return new Response(
+      JSON.stringify({ id: job.id, status: job.status, error: job.error, events: (job.events ?? []).slice(-40) }),
+      { status: 200, headers: { 'content-type': 'application/json' } },
+    )
+  }
   const ak = url.searchParams.get('address_key') || ''
   return proxy(`/api/analogs?address_key=${encodeURIComponent(ak)}`)
 }
@@ -72,6 +84,26 @@ export async function POST(req: Request): Promise<Response> {
   if (type === 'from-url') {
     const body = await req.text()
     return proxy('/api/analogs/from-url', { method: 'POST', body, headers: { 'content-type': 'application/json' } })
+  }
+
+  if (type === 'import-library') {
+    const inForm = await req.formData()
+    const file = inForm.get('library_file')
+    if (!(file instanceof Blob)) return new Response(JSON.stringify({ error: 'Файл бібліотеки обовʼязковий.' }), { status: 400 })
+    const out = new FormData()
+    out.append('library_file', file, (file as File).name || 'library.csv')
+    const cookie = await autovalueLogin()
+    const res = await autovalueFetch('/api/library/import', cookie, { method: 'POST', body: out })
+    const text = await res.text()
+    try {
+      const job = JSON.parse(text)
+      return new Response(JSON.stringify({ jobId: job.id, status: job.status }), {
+        status: res.status,
+        headers: { 'content-type': 'application/json' },
+      })
+    } catch {
+      return new Response(text, { status: res.status, headers: { 'content-type': 'application/json' } })
+    }
   }
 
   const body = await req.text()

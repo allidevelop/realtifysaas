@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react'
 
+import { LibraryImport } from '@/components/valuation/LibraryImport'
+
 interface Group {
   address_key: string
   address: string | null
@@ -245,6 +247,8 @@ export function AnalogDatabase() {
         </button>
         {urlMsg && <span className="text-sm text-ink-500">{urlMsg}</span>}
       </div>
+
+      <LibraryImport onDone={loadGroups} />
 
       {error && <p className="mb-3 text-sm text-red-600">{error}</p>}
 
