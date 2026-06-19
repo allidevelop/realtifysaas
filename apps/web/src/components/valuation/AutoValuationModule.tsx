@@ -214,6 +214,15 @@ export function AutoValuationModule({ quota }: { quota: number }) {
               </span>
             </div>
 
+            {job.status === 'passed' && (
+              <a
+                href={`/account/auto-valuation/editor/${job.id}`}
+                className="mb-3 flex items-center justify-center gap-2 rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-700"
+              >
+                ✎ Відкрити в редакторі — правка та експорт PDF / Word
+              </a>
+            )}
+
             {job.artifacts.length > 0 && (
               <div className="mb-3 space-y-2">
                 {job.artifacts.map((a) => (
