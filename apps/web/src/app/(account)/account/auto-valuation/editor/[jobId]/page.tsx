@@ -6,6 +6,25 @@ import { resolveModuleAccess } from '@/lib/billing/entitlements'
 
 export const dynamic = 'force-dynamic'
 
+// Картинки приходять лёгкими (srcRef = "reportimg:N"); підставляємо bridge-URL по позиції
+// (порядок = depth-first обходу, як у движка) — браузер тягне кожну окремим запитом.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function attachImageUrls(doc: any, jobId: string, object: string): void {
+  const base = `/account/auto-valuation/report-image?job=${encodeURIComponent(jobId)}&object=${encodeURIComponent(object)}`
+  let i = 0
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const walk = (node: any): void => {
+    if (!node || typeof node !== 'object') return
+    if (node.type === 'image' || node.type === 'documentScan') {
+      node.attrs = node.attrs || {}
+      node.attrs.srcRef = `${base}&node=${i}`
+      i += 1
+    }
+    if (Array.isArray(node.content)) node.content.forEach(walk)
+  }
+  walk(doc)
+}
+
 export default async function ReportEditorPage({ params }: { params: Promise<{ jobId: string }> }) {
   const { jobId } = await params
   const user = await requireUser(`/account/auto-valuation/editor/${jobId}`)
@@ -34,6 +53,7 @@ export default async function ReportEditorPage({ params }: { params: Promise<{ j
       const d = await r.json()
       initialDoc = d.document ?? null
       if (!initialDoc) loadError = 'Не вдалося зібрати документ звіту.'
+      else attachImageUrls(initialDoc, jobId, object)
     }
   } catch {
     loadError = 'Сервіс автооцінки недоступний.'
