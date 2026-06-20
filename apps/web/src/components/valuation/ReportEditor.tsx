@@ -8,12 +8,24 @@ import { useState } from 'react'
 /* eslint-disable @typescript-eslint/no-explicit-any */
 type Doc = { type: string; version?: number; content: any[] }
 
+// Людські підказки для полів, що оцінювач заповнює вручну.
+const FIELD_LABELS: Record<string, string> = {
+  rooms_text: 'кімнатність (напр. однокімнатної)',
+  rooms_text_upper: 'кімнатність (напр. ОДНОКІМНАТНОЇ)',
+  object_valuation_description: 'опис обʼєкта оцінки',
+  object_valuation_description_short: 'короткий опис обʼєкта',
+  location_description: 'характеристика місцезнаходження / району',
+  object_building_details: 'характеристики будинку / ЖК',
+  object_complex_name: 'назва ЖК',
+}
+
 // ── variableField: інлайн-значення з provenance (auto/placeholder/manual) ──────
 function VariableFieldView(props: any) {
   const { node, updateAttributes } = props
   const { field, source, value } = node.attrs as { field: string; source: string; value: string }
   const [editing, setEditing] = useState(false)
   const [val, setVal] = useState<string>(value ?? '')
+  const hint = FIELD_LABELS[field] || field
 
   const commit = () => {
     setEditing(false)
@@ -41,9 +53,9 @@ function VariableFieldView(props: any) {
             setVal(value ?? '')
             setEditing(true)
           }}
-          title={`{${field}} · ${source}`}
+          title={source === 'placeholder' ? `Заповнити: ${hint}` : `${hint} · ${source}`}
         >
-          {value || '———'}
+          {value ? value : source === 'placeholder' ? `[${hint}]` : '———'}
         </span>
       )}
     </NodeViewWrapper>
@@ -298,6 +310,18 @@ export function ReportEditor({ jobId, object, initialDoc }: { jobId: string; obj
         <EditorContent editor={editor} />
       </div>
 
+      {/* Швидкий доступ знизу: вгору + зберегти/експорт (видно з будь-якого місця) */}
+      <div className="fixed bottom-5 right-5 z-40 flex flex-col items-end gap-2">
+        <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} title="Вгору" className="fab" aria-label="Вгору">
+          ↑
+        </button>
+        <div className="flex items-center gap-1.5 rounded-xl border border-ink-200 bg-surface/95 p-1.5 shadow-lg backdrop-blur supports-[backdrop-filter]:bg-surface/85">
+          <button onClick={save} disabled={busy} className="ed-btn-primary">Зберегти</button>
+          <button onClick={() => exportReport('pdf', 'clean')} disabled={busy} className="ed-btn-primary">PDF</button>
+          <button onClick={() => exportReport('docx', 'clean')} disabled={busy} className="ed-btn-primary">Word</button>
+        </div>
+      </div>
+
       <style>{`
         .report-canvas { background:#fff; color:#000; border:1px solid var(--color-ink-200); border-radius:12px; padding:24mm 18mm; font-family:"Times New Roman","Tinos",serif; font-size:14pt; line-height:1.4; }
         .report-canvas h2 { text-align:center; font-size:14pt; font-weight:bold; margin:10pt 0 4pt; }
@@ -305,7 +329,7 @@ export function ReportEditor({ jobId, object, initialDoc }: { jobId: string; obj
         .report-canvas p { text-align:justify; text-indent:12.5mm; margin:0; }
         .report-canvas .ProseMirror:focus { outline:none; }
         .vf { border-radius:3px; padding:0 1px; cursor:text; }
-        .vf-placeholder { outline:1px dashed #e57373; }
+        .vf-placeholder { outline:1px dashed #e57373; color:#c62828; font-style:italic; }
         .show-prov .vf-auto { background:#E6F4EA; }
         .show-prov .vf-placeholder { background:#FDECEA; }
         .show-prov .vf-manual { background:#E8F0FE; }
@@ -321,6 +345,8 @@ export function ReportEditor({ jobId, object, initialDoc }: { jobId: string; obj
         .ed-btn { border:1px solid var(--color-ink-200); border-radius:8px; padding:4px 10px; font-size:13px; background:var(--color-surface); }
         .ed-btn-primary { border:none; border-radius:8px; padding:5px 12px; font-size:13px; font-weight:600; color:#fff; background:var(--color-brand-600); }
         .ed-btn-primary:disabled { opacity:.6; }
+        .fab { width:42px; height:42px; border-radius:9999px; border:1px solid var(--color-ink-200); background:var(--color-surface); color:var(--color-ink-700); font-size:20px; line-height:1; box-shadow:0 2px 10px rgba(0,0,0,.18); cursor:pointer; }
+        .fab:hover { background:var(--color-ink-100); }
       `}</style>
     </div>
   )
