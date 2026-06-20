@@ -3,7 +3,7 @@
 import { Node, mergeAttributes } from '@tiptap/core'
 import { EditorContent, NodeViewWrapper, ReactNodeViewRenderer, useEditor } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 type Doc = { type: string; version?: number; content: any[] }
@@ -26,6 +26,19 @@ function VariableFieldView(props: any) {
   const [editing, setEditing] = useState(false)
   const [val, setVal] = useState<string>(value ?? '')
   const hint = FIELD_LABELS[field] || field
+
+  // Навігатор полів просить відкрити саме це поле (по його позиції в документі).
+  useEffect(() => {
+    const onEdit = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { pos: number }
+      if (typeof props.getPos === 'function' && detail?.pos === props.getPos()) {
+        setVal(value ?? '')
+        setEditing(true)
+      }
+    }
+    window.addEventListener('vf-edit', onEdit)
+    return () => window.removeEventListener('vf-edit', onEdit)
+  }, [props, value])
 
   const commit = () => {
     setEditing(false)
@@ -228,12 +241,41 @@ export function ReportEditor({ jobId, object, initialDoc }: { jobId: string; obj
   const [showProv, setShowProv] = useState(true)
   const [status, setStatus] = useState<string>('')
   const [busy, setBusy] = useState(false)
+  const [todo, setTodo] = useState<{ field: string; pos: number; hint: string }[]>([])
+  const [navOpen, setNavOpen] = useState(false)
 
   const editor = useEditor({
     extensions: [StarterKit, VariableField, LockedTable, ImageNode, DocumentScanNode],
     content: { type: 'doc', content: initialDoc.content },
     immediatelyRender: false,
   })
+
+  // Живий список незаповнених полів (placeholder) — оновлюється при кожній правці.
+  useEffect(() => {
+    if (!editor) return
+    const recompute = () => {
+      const list: { field: string; pos: number; hint: string }[] = []
+      editor.state.doc.descendants((node, pos) => {
+        if (node.type.name === 'variableField' && node.attrs.source === 'placeholder') {
+          list.push({ field: node.attrs.field, pos, hint: FIELD_LABELS[node.attrs.field] || node.attrs.field })
+        }
+      })
+      setTodo(list)
+    }
+    recompute()
+    editor.on('update', recompute)
+    return () => {
+      editor.off('update', recompute)
+    }
+  }, [editor])
+
+  // Прыжок до поля: виділити, проскролити й відкрити інлайн-ввод.
+  const jumpTo = (pos: number) => {
+    if (!editor) return
+    editor.chain().focus().setNodeSelection(pos).scrollIntoView().run()
+    window.dispatchEvent(new CustomEvent('vf-edit', { detail: { pos } }))
+    setNavOpen(false)
+  }
 
   const getDoc = () => ({ type: 'doc', version: 1, content: editor?.getJSON().content ?? [] })
 
@@ -299,6 +341,27 @@ export function ReportEditor({ jobId, object, initialDoc }: { jobId: string; obj
           Показати походження
         </label>
         <span className="mx-1 h-5 w-px bg-ink-200" />
+        <div className="relative">
+          <button
+            onClick={() => setNavOpen((o) => !o)}
+            className={`ed-btn ${todo.length ? 'vf-todo-btn' : 'vf-done-btn'}`}
+            title="Поля, які треба заповнити вручну"
+          >
+            {todo.length ? `📝 Заповнити: ${todo.length}` : '✓ Усі поля заповнені'}
+          </button>
+          {navOpen && todo.length > 0 && (
+            <div className="vf-nav">
+              <div className="vf-nav-head">Натисніть, щоб перейти й заповнити:</div>
+              {todo.map((p, i) => (
+                <button key={`${p.field}-${p.pos}`} onClick={() => jumpTo(p.pos)} className="vf-nav-item">
+                  <span className="vf-nav-num">{i + 1}</span>
+                  {p.hint}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+        <span className="mx-1 h-5 w-px bg-ink-200" />
         <button onClick={save} disabled={busy} className="ed-btn-primary">Зберегти</button>
         <button onClick={() => exportReport('pdf', 'clean')} disabled={busy} className="ed-btn-primary">PDF</button>
         <button onClick={() => exportReport('docx', 'clean')} disabled={busy} className="ed-btn-primary">Word</button>
@@ -347,6 +410,14 @@ export function ReportEditor({ jobId, object, initialDoc }: { jobId: string; obj
         .ed-btn-primary:disabled { opacity:.6; }
         .fab { width:42px; height:42px; border-radius:9999px; border:1px solid var(--color-ink-200); background:var(--color-surface); color:var(--color-ink-700); font-size:20px; line-height:1; box-shadow:0 2px 10px rgba(0,0,0,.18); cursor:pointer; }
         .fab:hover { background:var(--color-ink-100); }
+        .vf-todo-btn { border-color:#e57373; color:#c62828; font-weight:600; }
+        .vf-done-btn { border-color:#66bb6a; color:#2e7d32; font-weight:600; }
+        .vf-nav { position:absolute; top:calc(100% + 6px); left:0; z-index:50; width:300px; max-height:50vh; overflow:auto; background:var(--color-surface); border:1px solid var(--color-ink-200); border-radius:10px; box-shadow:0 8px 24px rgba(0,0,0,.18); padding:6px; }
+        .vf-nav-head { font-size:11px; color:var(--color-ink-500); padding:4px 6px 6px; }
+        .vf-nav-item { display:flex; align-items:center; gap:8px; width:100%; text-align:left; font-size:13px; color:var(--color-ink-800); padding:6px 8px; border-radius:7px; background:none; border:none; cursor:pointer; }
+        .vf-nav-item:hover { background:var(--color-ink-100); }
+        .vf-nav-num { flex:0 0 auto; width:18px; height:18px; border-radius:9999px; background:#FDECEA; color:#c62828; font-size:11px; font-weight:700; display:inline-flex; align-items:center; justify-content:center; }
+        .ProseMirror .ProseMirror-selectednode .vf { box-shadow:0 0 0 2px #fbc02d; border-radius:3px; }
       `}</style>
     </div>
   )
