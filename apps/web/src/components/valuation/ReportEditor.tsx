@@ -134,6 +134,74 @@ const LockedTable = Node.create({
   },
 })
 
+// ── image / documentScan: блокові картинки (data-URI), read-only ──────────────
+function ImageView(props: any) {
+  const { srcRef, widthEmu, caption, href } = props.node.attrs as {
+    srcRef: string
+    widthEmu: number
+    caption?: string | null
+    href?: string | null
+  }
+  const widthMm = widthEmu ? Number(widthEmu) / 36000 : null
+  return (
+    <NodeViewWrapper className="rep-image" contentEditable={false}>
+      {srcRef ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={srcRef} alt="" style={{ width: widthMm ? `${widthMm}mm` : '100%', maxWidth: '100%', display: 'block', margin: '0 auto' }} />
+      ) : null}
+      {(caption || href) && (
+        <div className="rep-caption">
+          {href ? (
+            <a href={href} target="_blank" rel="noreferrer">
+              {caption || href}
+            </a>
+          ) : (
+            caption
+          )}
+        </div>
+      )}
+    </NodeViewWrapper>
+  )
+}
+
+const ImageNode = Node.create({
+  name: 'image',
+  group: 'block',
+  atom: true,
+  selectable: true,
+  addAttributes() {
+    return { srcRef: { default: '' }, widthEmu: { default: 0 }, aspect: { default: 1 }, caption: { default: null }, href: { default: null } }
+  },
+  parseHTML() {
+    return [{ tag: 'figure[data-rep-image]' }]
+  },
+  renderHTML() {
+    return ['figure', { 'data-rep-image': 'true' }]
+  },
+  addNodeView() {
+    return ReactNodeViewRenderer(ImageView)
+  },
+})
+
+const DocumentScanNode = Node.create({
+  name: 'documentScan',
+  group: 'block',
+  atom: true,
+  selectable: true,
+  addAttributes() {
+    return { kind: { default: '' }, srcRef: { default: '' }, widthEmu: { default: 0 }, aspect: { default: 1 }, locked: { default: true } }
+  },
+  parseHTML() {
+    return [{ tag: 'figure[data-rep-scan]' }]
+  },
+  renderHTML() {
+    return ['figure', { 'data-rep-scan': 'true' }]
+  },
+  addNodeView() {
+    return ReactNodeViewRenderer(ImageView)
+  },
+})
+
 function countPlaceholders(doc: any): number {
   let n = 0
   const walk = (node: any) => {
@@ -150,7 +218,7 @@ export function ReportEditor({ jobId, object, initialDoc }: { jobId: string; obj
   const [busy, setBusy] = useState(false)
 
   const editor = useEditor({
-    extensions: [StarterKit, VariableField, LockedTable],
+    extensions: [StarterKit, VariableField, LockedTable, ImageNode, DocumentScanNode],
     content: { type: 'doc', content: initialDoc.content },
     immediatelyRender: false,
   })
@@ -246,6 +314,10 @@ export function ReportEditor({ jobId, object, initialDoc }: { jobId: string; obj
         .locked-badge { font-family:system-ui; font-size:11px; color:#777; margin-bottom:2px; }
         .locked-tbl { border-collapse:collapse; table-layout:fixed; font-size:8pt; }
         .locked-tbl td, .locked-tbl th { border:0.5pt solid #000; vertical-align:top; padding:0.3mm 1mm; text-align:center; word-wrap:break-word; }
+        .rep-image { margin:6pt 0; }
+        .rep-image img { border:1px solid var(--color-ink-100); }
+        .rep-caption { text-align:center; font-size:11pt; margin-top:2px; }
+        .rep-caption a { color:#0563C1; }
         .ed-btn { border:1px solid var(--color-ink-200); border-radius:8px; padding:4px 10px; font-size:13px; background:var(--color-surface); }
         .ed-btn-primary { border:none; border-radius:8px; padding:5px 12px; font-size:13px; font-weight:600; color:#fff; background:var(--color-brand-600); }
         .ed-btn-primary:disabled { opacity:.6; }
