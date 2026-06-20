@@ -210,7 +210,7 @@ export function ReportEditor({ jobId, object, initialDoc }: { jobId: string; obj
 
   return (
     <div>
-      <div className="mb-3 flex flex-wrap items-center gap-2 rounded-xl border border-ink-200 bg-surface p-3 shadow-sm">
+      <div className="sticky top-2 z-30 mb-3 flex flex-wrap items-center gap-2 rounded-xl border border-ink-200 bg-surface/95 p-3 shadow-md backdrop-blur supports-[backdrop-filter]:bg-surface/80">
         <button onClick={() => editor?.chain().focus().toggleBold().run()} className="ed-btn">B</button>
         <button onClick={() => editor?.chain().focus().toggleItalic().run()} className="ed-btn italic">I</button>
         <span className="mx-1 h-5 w-px bg-ink-200" />
