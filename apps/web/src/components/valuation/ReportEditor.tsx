@@ -23,10 +23,10 @@ const FIELD_LABELS: Record<string, string> = {
 // ── variableField: інлайн-значення з provenance (auto/placeholder/manual) ──────
 function VariableFieldView(props: any) {
   const { node, updateAttributes } = props
-  const { field, source, value } = node.attrs as { field: string; source: string; value: string }
+  const { field, source, value, label } = node.attrs as { field: string; source: string; value: string; label?: string | null }
   const [editing, setEditing] = useState(false)
   const [val, setVal] = useState<string>(value ?? '')
-  const hint = FIELD_LABELS[field] || field
+  const hint = FIELD_LABELS[field] || label || field
 
   // Навігатор полів просить відкрити саме це поле (по його позиції в документі).
   useEffect(() => {
@@ -82,7 +82,7 @@ const VariableField = Node.create({
   inline: true,
   atom: true,
   addAttributes() {
-    return { field: { default: '' }, source: { default: 'auto' }, value: { default: '' }, format: { default: null } }
+    return { field: { default: '' }, source: { default: 'auto' }, value: { default: '' }, format: { default: null }, label: { default: null } }
   },
   parseHTML() {
     return [{ tag: 'span[data-field]' }]
@@ -258,7 +258,7 @@ export function ReportEditor({ jobId, object, initialDoc }: { jobId: string; obj
       const list: { field: string; pos: number; hint: string }[] = []
       editor.state.doc.descendants((node, pos) => {
         if (node.type.name === 'variableField' && node.attrs.source === 'placeholder') {
-          list.push({ field: node.attrs.field, pos, hint: FIELD_LABELS[node.attrs.field] || node.attrs.field })
+          list.push({ field: node.attrs.field, pos, hint: FIELD_LABELS[node.attrs.field] || node.attrs.label || node.attrs.field })
         }
       })
       setTodo(list)
