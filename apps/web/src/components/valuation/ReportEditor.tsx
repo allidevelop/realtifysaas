@@ -3,7 +3,7 @@
 import { Node, mergeAttributes } from '@tiptap/core'
 import { EditorContent, NodeViewWrapper, ReactNodeViewRenderer, useEditor } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 type Doc = { type: string; version?: number; content: any[] }
@@ -25,21 +25,36 @@ function VariableFieldView(props: any) {
   const { node, updateAttributes } = props
   const { field, source, value, label } = node.attrs as { field: string; source: string; value: string; label?: string | null }
   const [editing, setEditing] = useState(false)
-  const [val, setVal] = useState<string>(value ?? '')
+  const [val, setVal] = useState<string>('')
+  const taRef = useRef<HTMLTextAreaElement | null>(null)
   const hint = FIELD_LABELS[field] || label || field
+
+  const startEdit = () => {
+    // Плейсхолдер редагуємо з порожнього (не треба стирати «________ заповнити»);
+    // заповнене значення — з поточного тексту.
+    setVal(source === 'placeholder' ? '' : value ?? '')
+    setEditing(true)
+  }
 
   // Навігатор полів просить відкрити саме це поле (по його позиції в документі).
   useEffect(() => {
     const onEdit = (e: Event) => {
       const detail = (e as CustomEvent).detail as { pos: number }
-      if (typeof props.getPos === 'function' && detail?.pos === props.getPos()) {
-        setVal(value ?? '')
-        setEditing(true)
-      }
+      if (typeof props.getPos === 'function' && detail?.pos === props.getPos()) startEdit()
     }
     window.addEventListener('vf-edit', onEdit)
     return () => window.removeEventListener('vf-edit', onEdit)
-  }, [props, value])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [props, value, source])
+
+  // Авто-висота textarea під вміст (щоб довгі значення було видно повністю).
+  useEffect(() => {
+    const el = taRef.current
+    if (editing && el) {
+      el.style.height = 'auto'
+      el.style.height = `${el.scrollHeight}px`
+    }
+  }, [editing, val])
 
   const commit = () => {
     setEditing(false)
@@ -48,28 +63,32 @@ function VariableFieldView(props: any) {
   return (
     <NodeViewWrapper as="span" className={`vf vf-${editing ? 'editing' : source}`}>
       {editing ? (
-        <input
+        <textarea
+          ref={taRef}
           autoFocus
+          rows={1}
           value={val}
+          placeholder={hint}
           onChange={(e) => setVal(e.target.value)}
           onBlur={commit}
           onKeyDown={(e) => {
-            if (e.key === 'Enter') {
+            if (e.key === 'Enter' && !e.shiftKey) {
               e.preventDefault()
               commit()
+            } else if (e.key === 'Escape') {
+              e.preventDefault()
+              setEditing(false)
             }
           }}
           className="vf-input"
+          style={{ width: `min(${Math.max(val.length + 2, 16)}ch, 100%)` }}
         />
       ) : (
         <span
-          onClick={() => {
-            setVal(value ?? '')
-            setEditing(true)
-          }}
+          onClick={startEdit}
           title={source === 'placeholder' ? `Заповнити: ${hint}` : `${hint} · ${source}`}
         >
-          {value ? value : source === 'placeholder' ? `[${hint}]` : '———'}
+          {source === 'placeholder' ? `[${hint}]` : value || '———'}
         </span>
       )}
     </NodeViewWrapper>
@@ -270,12 +289,18 @@ export function ReportEditor({ jobId, object, initialDoc }: { jobId: string; obj
     }
   }, [editor])
 
-  // Прыжок до поля: виділити, проскролити й відкрити інлайн-ввод.
+  // Прыжок до поля: виділити, відкрити ввод і ОТЦЕНТРУВАТИ у вікні
+  // (PM scrollIntoView кладе поле під липкий тулбар — тому центруємо вручну).
   const jumpTo = (pos: number) => {
     if (!editor) return
-    editor.chain().focus().setNodeSelection(pos).scrollIntoView().run()
+    editor.chain().focus().setNodeSelection(pos).run()
     window.dispatchEvent(new CustomEvent('vf-edit', { detail: { pos } }))
     setNavOpen(false)
+    window.setTimeout(() => {
+      const dom = editor.view?.nodeDOM(pos) as HTMLElement | null
+      const el = (dom && dom.nodeType === 1 ? dom : dom?.parentElement) || document.querySelector('.ProseMirror-selectednode')
+      el?.scrollIntoView({ block: 'center', behavior: 'smooth' })
+    }, 60)
   }
 
   const getDoc = () => ({ type: 'doc', version: 1, content: editor?.getJSON().content ?? [] })
@@ -397,7 +422,8 @@ export function ReportEditor({ jobId, object, initialDoc }: { jobId: string; obj
         .show-prov .vf-auto { background:#E6F4EA; }
         .show-prov .vf-placeholder { background:#FDECEA; }
         .show-prov .vf-manual { background:#E8F0FE; }
-        .vf-input { font:inherit; border:1px solid #90caf9; border-radius:3px; padding:0 2px; min-width:60px; }
+        .vf-input { font:inherit; border:1px solid #90caf9; border-radius:4px; padding:2px 6px; min-width:160px; max-width:100%; vertical-align:top; line-height:1.35; box-sizing:border-box; resize:vertical; overflow:hidden; white-space:pre-wrap; word-break:break-word; background:#fff; color:#000; display:inline-block; }
+        .vf-input::placeholder { color:#9e9e9e; font-style:italic; }
         .locked-wrap { margin:6pt 0; position:relative; }
         .locked-badge { font-family:system-ui; font-size:11px; color:#777; margin-bottom:2px; }
         .locked-tbl { border-collapse:collapse; table-layout:fixed; font-size:8pt; }
