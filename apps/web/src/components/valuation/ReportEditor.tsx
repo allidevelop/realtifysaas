@@ -58,6 +58,9 @@ function VariableFieldView(props: any) {
 
   const commit = () => {
     setEditing(false)
+    // Клік-проклик плейсхолдера без вводу не повинен «заповнювати» його порожнечею
+    // (інакше source стає manual і поле зникає зі списку). Міняємо лише при реальному вводі.
+    if (source === 'placeholder' && !val.trim()) return
     if (val !== value) updateAttributes({ value: val, source: 'manual' })
   }
   return (
