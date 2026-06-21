@@ -17,6 +17,7 @@ const FIELD_LABELS: Record<string, string> = {
   location_description: 'характеристика місцезнаходження / району',
   object_building_details: 'характеристики будинку / ЖК',
   object_complex_name: 'назва ЖК',
+  extract_reference: 'реквізити витяга: № та дата (напр. № 383177609 від 17.06.2024 р.) — див. скан витяга нижче',
 }
 
 // ── variableField: інлайн-значення з provenance (auto/placeholder/manual) ──────
