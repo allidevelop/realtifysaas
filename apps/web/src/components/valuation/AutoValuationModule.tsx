@@ -46,6 +46,111 @@ const STATUS_LABEL: Record<string, string> = {
   failed: 'помилка',
 }
 
+interface RegisterStatus {
+  exists: boolean
+  filename?: string
+  entries?: number
+  updated?: string
+  date_from?: string | null
+  date_to?: string | null
+}
+
+// База дат оцінки (реєстр «Продаж квартир») — оновлюється раз на місяць; джерело
+// дати оцінки та дати звіту для всіх майбутніх оцінок (матч за адресою + № квартири).
+function RegisterPanel() {
+  const [status, setStatus] = useState<RegisterStatus | null>(null)
+  const [busy, setBusy] = useState(false)
+  const [msg, setMsg] = useState<string | null>(null)
+  const fileRef = useRef<HTMLInputElement>(null)
+
+  const load = async () => {
+    try {
+      const r = await fetch('/account/auto-valuation/register')
+      if (r.ok) setStatus((await r.json()) as RegisterStatus)
+    } catch {
+      /* ignore */
+    }
+  }
+  useEffect(() => {
+    void load()
+  }, [])
+
+  async function upload() {
+    const file = fileRef.current?.files?.[0]
+    if (!file) {
+      setMsg('Оберіть файл реєстру (.xlsx).')
+      return
+    }
+    setBusy(true)
+    setMsg(null)
+    try {
+      const fd = new FormData()
+      fd.append('file', file)
+      const r = await fetch('/account/auto-valuation/register', { method: 'POST', body: fd })
+      const d = await r.json()
+      if (!r.ok) {
+        setMsg(d.detail || d.error || 'Помилка завантаження.')
+        return
+      }
+      setStatus(d as RegisterStatus)
+      setMsg(`Оновлено: ${d.entries} записів${d.date_from ? ` · дати ${d.date_from}–${d.date_to}` : ''}.`)
+      if (fileRef.current) fileRef.current.value = ''
+    } catch {
+      setMsg('Помилка мережі.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <div className="rounded-2xl border border-ink-200 bg-surface p-5 shadow-sm">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h3 className="text-sm font-semibold text-ink-800">База дат оцінки (реєстр «Продаж квартир»)</h3>
+          <p className="mt-0.5 max-w-xl text-xs text-ink-500">
+            Джерело дати оцінки та дати звіту. Завантажуйте раз на місяць — далі система підставляє
+            дати автоматично за адресою + № квартири. Старий реєстр зберігається в резервній копії.
+          </p>
+        </div>
+        <div className="text-right text-xs leading-5">
+          {status?.exists ? (
+            <span className="text-ink-700">
+              <span className="font-semibold text-emerald-700">{status.entries} записів</span>
+              {status.date_from ? (
+                <>
+                  {' '}
+                  · {status.date_from}–{status.date_to}
+                </>
+              ) : null}
+              <span className="block text-ink-400">оновлено {status.updated}</span>
+            </span>
+          ) : status ? (
+            <span className="text-amber-600">Реєстр ще не завантажено</span>
+          ) : (
+            <span className="text-ink-400">…</span>
+          )}
+        </div>
+      </div>
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <input
+          ref={fileRef}
+          type="file"
+          accept=".xlsx,.xlsm"
+          className="block text-sm text-ink-600 file:mr-3 file:rounded-lg file:border file:border-ink-200 file:bg-ink-100 file:px-3.5 file:py-2 file:text-sm file:font-medium file:text-ink-700 hover:file:bg-ink-200"
+        />
+        <button
+          onClick={upload}
+          disabled={busy}
+          className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+        >
+          {busy ? 'Завантаження…' : 'Оновити реєстр'}
+        </button>
+        {msg ? <span className="text-xs text-ink-600">{msg}</span> : null}
+      </div>
+    </div>
+  )
+}
+
 export function AutoValuationModule({ quota }: { quota: number }) {
   const formRef = useRef<HTMLFormElement>(null)
   const [jobId, setJobId] = useState<string | null>(null)
@@ -105,7 +210,9 @@ export function AutoValuationModule({ quota }: { quota: number }) {
   const running = !!jobId && !done
 
   return (
-    <div className="mt-6 grid gap-5 lg:grid-cols-2">
+    <div className="mt-6 space-y-5">
+      <RegisterPanel />
+      <div className="grid gap-5 lg:grid-cols-2">
       <form ref={formRef} onSubmit={start} className="space-y-3 rounded-2xl border border-ink-200 bg-surface p-6 shadow-sm">
         <p className="rounded-lg bg-ink-100/40 px-3 py-2 text-xs text-ink-600">
           Завантажте PDF (витяг / техпаспорт). Система розпізнає обʼєкт, візьме аналоги з бази
@@ -247,6 +354,7 @@ export function AutoValuationModule({ quota }: { quota: number }) {
             </div>
           </>
         )}
+      </div>
       </div>
     </div>
   )
