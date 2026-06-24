@@ -151,6 +151,103 @@ function RegisterPanel() {
   )
 }
 
+interface KozaStatus {
+  exists: boolean
+  buildings?: number
+  total?: number
+}
+
+// База шаблонів («козли») — готові звіти по домах. Для дому з козою система генерує
+// звіт КЛОНУВАННЯМ кози (формат/контент/аналоги дому як у клієнта) + дані квартири.
+function KozaPanel() {
+  const [status, setStatus] = useState<KozaStatus | null>(null)
+  const [busy, setBusy] = useState(false)
+  const [msg, setMsg] = useState<string | null>(null)
+  const fileRef = useRef<HTMLInputElement>(null)
+
+  const load = async () => {
+    try {
+      const r = await fetch('/account/auto-valuation/koza-base')
+      if (r.ok) setStatus((await r.json()) as KozaStatus)
+    } catch {
+      /* ignore */
+    }
+  }
+  useEffect(() => {
+    void load()
+  }, [])
+
+  async function upload() {
+    const file = fileRef.current?.files?.[0]
+    if (!file) {
+      setMsg('Оберіть файл-звіт (.doc/.docx).')
+      return
+    }
+    setBusy(true)
+    setMsg(null)
+    try {
+      const fd = new FormData()
+      fd.append('file', file)
+      const r = await fetch('/account/auto-valuation/koza-base', { method: 'POST', body: fd })
+      const d = await r.json()
+      if (!r.ok) {
+        setMsg(d.detail || d.error || 'Помилка завантаження.')
+        return
+      }
+      setStatus(d as KozaStatus)
+      setMsg(d.warning || `Додано. Домів у базі: ${d.buildings}, файлів: ${d.total}.`)
+      if (fileRef.current) fileRef.current.value = ''
+    } catch {
+      setMsg('Помилка мережі.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <div className="rounded-2xl border border-ink-200 bg-surface p-5 shadow-sm">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h3 className="text-sm font-semibold text-ink-800">База шаблонів (готові звіти по домах)</h3>
+          <p className="mt-0.5 max-w-xl text-xs text-ink-500">
+            Для дому, по якому вже є звіт, система будує новий звіт КЛОНУВАННЯМ цього шаблону
+            (формат, опис ЖК, характеристики, аналоги — як у вас), підставляючи дані квартири.
+            Завантажуйте нові звіти сюди — далі вони підбираються автоматично за адресою.
+          </p>
+        </div>
+        <div className="text-right text-xs leading-5">
+          {status?.exists ? (
+            <span className="text-ink-700">
+              <span className="font-semibold text-emerald-700">{status.buildings} домів</span>
+              <span className="block text-ink-400">{status.total} звітів у базі</span>
+            </span>
+          ) : status ? (
+            <span className="text-amber-600">База порожня</span>
+          ) : (
+            <span className="text-ink-400">…</span>
+          )}
+        </div>
+      </div>
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <input
+          ref={fileRef}
+          type="file"
+          accept=".doc,.docx"
+          className="block text-sm text-ink-600 file:mr-3 file:rounded-lg file:border file:border-ink-200 file:bg-ink-100 file:px-3.5 file:py-2 file:text-sm file:font-medium file:text-ink-700 hover:file:bg-ink-200"
+        />
+        <button
+          onClick={upload}
+          disabled={busy}
+          className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+        >
+          {busy ? 'Завантаження…' : 'Додати шаблон'}
+        </button>
+        {msg ? <span className="text-xs text-ink-600">{msg}</span> : null}
+      </div>
+    </div>
+  )
+}
+
 export function AutoValuationModule({ quota }: { quota: number }) {
   const formRef = useRef<HTMLFormElement>(null)
   const [jobId, setJobId] = useState<string | null>(null)
@@ -211,6 +308,7 @@ export function AutoValuationModule({ quota }: { quota: number }) {
 
   return (
     <div className="mt-6 space-y-5">
+      <KozaPanel />
       <RegisterPanel />
       <div className="grid gap-5 lg:grid-cols-2">
       <form ref={formRef} onSubmit={start} className="space-y-3 rounded-2xl border border-ink-200 bg-surface p-6 shadow-sm">
